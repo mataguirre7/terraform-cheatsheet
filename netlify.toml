@@ -1,0 +1,18 @@
+# Sitio 100% estático: no hay build, Netlify publica la carpeta tal cual.
+[build]
+  publish = "."
+  command = ""
+
+# Cabeceras de seguridad básicas para todas las páginas
+[[headers]]
+  for = "/*"
+  [headers.values]
+    X-Content-Type-Options = "nosniff"
+    X-Frame-Options = "DENY"
+    Referrer-Policy = "strict-origin-when-cross-origin"
+
+# Las imágenes PNG cambian poco: caché de 1 semana
+[[headers]]
+  for = "/img/*"
+  [headers.values]
+    Cache-Control = "public, max-age=604800"

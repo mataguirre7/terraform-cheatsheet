@@ -1,0 +1,305 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="description" content="Práctica de Terraform sin cuenta de cloud: una app Node + MongoDB levantada con el provider de Docker, paso a paso.">
+<meta name="theme-color" content="#7b42bc">
+<title>Terraform · Práctica con Docker</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect x='4' y='4' width='56' height='56' rx='14' fill='%237b42bc'/%3E%3Cg fill='%23fff'%3E%3Cpath d='M14 13l10 5.8v11.6l-10-5.8z'/%3E%3Cpath d='M26 20.4l10 5.8v11.6l-10-5.8z'/%3E%3Cpath d='M26 34.2l10 5.8v11.6l-10-5.8z'/%3E%3Cpath d='M38 26.2l10-5.8v11.6l-10 5.8z' opacity='.7'/%3E%3C/g%3E%3C/svg%3E">
+<link rel="stylesheet" href="assets/style.css">
+<script src="assets/app.js"></script>
+</head>
+<body data-page="practica">
+<header class="topbar"></header>
+
+<svg width="0" height="0" style="position:absolute" aria-hidden="true" focusable="false">
+  <defs>
+    <marker id="ah-img" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="f-img"/></marker>
+    <marker id="ah-net" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="f-net"/></marker>
+    <marker id="ah-vol" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="f-vol"/></marker>
+    <marker id="ah-cont" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="f-cont"/></marker>
+    <marker id="ah-file" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="f-file"/></marker>
+  </defs>
+</svg>
+
+<main class="wrap">
+
+  <div class="hero">
+    <span class="eyebrow">Terraform · Cheatsheet 06</span>
+    <h1>Práctica: tu app con Terraform y Docker</h1>
+    <p class="lead">La forma más barata de aprender Terraform: el provider <code>kreuzwerker/docker</code> crea contenedores en tu Docker Desktop. Vas a levantar <code>chanchito</code> + <code>monguito</code>, lo mismo que hacía tu <code>docker-compose.yml</code>, con <b>init → plan → apply</b>.</p>
+    <nav class="toc">
+      <a href="#mapa">Compose → Terraform</a>
+      <a href="#archivos">Los archivos</a>
+      <a href="#pasos">Paso a paso</a>
+      <a href="#experimentos">Experimentos</a>
+      <a href="#comparacion">¿Compose o Terraform?</a>
+    </nav>
+  </div>
+
+  <!-- ================= MAPA ================= -->
+  <section class="block" id="mapa">
+    <div class="section-head">
+      <div class="num" style="--tone:var(--c-comp)">1</div>
+      <div class="titles"><h2>Cada parte del compose, en qué recurso se convierte</h2><p>En Terraform nada es implícito: la red, el volumen y las imágenes son recursos propios.</p></div>
+    </div>
+    <div class="diagram">
+      <div class="svg-scroll">
+      <svg viewBox="0 0 1000 400" role="img" aria-label="Mapeo del docker-compose.yml a recursos docker_network, docker_volume, docker_image y docker_container">
+        <rect x="20" y="20" width="300" height="360" rx="14" class="d-comp" style="fill-opacity:.4"/>
+        <text x="40" y="46" class="d-title" style="font-size:13.5px">docker-compose.yml</text>
+        <text x="40" y="76" class="d-code f-comp" style="font-weight:700">services:</text>
+        <text x="56" y="104" class="d-code" style="font-weight:700">chanchito:</text>
+        <text x="72" y="130" class="d-code">build: .</text>
+        <text x="72" y="156" class="d-code">ports: 3000:3000</text>
+        <text x="72" y="182" class="d-code">links: monguito</text>
+        <text x="56" y="218" class="d-code" style="font-weight:700">monguito:</text>
+        <text x="72" y="244" class="d-code">image: mongo</text>
+        <text x="72" y="270" class="d-code">environment: …</text>
+        <text x="72" y="296" class="d-code">volumes: mongo-data…</text>
+        <text x="40" y="330" class="d-code f-comp" style="font-weight:700">volumes:</text>
+        <text x="56" y="356" class="d-code">mongo-data:</text>
+        <text x="200" y="134" class="d-lbl">→ imagen</text>
+        <text x="200" y="186" class="d-lbl">→ red</text>
+        <text x="200" y="274" class="d-lbl">→ variables</text>
+
+        <rect x="600" y="30" width="380" height="44" rx="10" class="d-cont"/>
+        <text x="616" y="57" class="d-code" style="font-weight:700">docker_container.chanchito</text>
+        <text x="964" y="57" text-anchor="end" class="d-lbl">ports 3000</text>
+        <rect x="600" y="86" width="380" height="44" rx="10" class="d-img"/>
+        <text x="616" y="113" class="d-code" style="font-weight:700">docker_image.chanchito</text>
+        <text x="964" y="113" text-anchor="end" class="d-lbl">build { context }</text>
+        <rect x="600" y="142" width="380" height="44" rx="10" class="d-net" style="stroke-dasharray:none"/>
+        <text x="616" y="169" class="d-code" style="font-weight:700">docker_network.app</text>
+        <text x="964" y="169" text-anchor="end" class="d-lbl">DNS por nombre</text>
+        <rect x="600" y="198" width="380" height="44" rx="10" class="d-cont"/>
+        <text x="616" y="225" class="d-code" style="font-weight:700">docker_container.monguito</text>
+        <text x="964" y="225" text-anchor="end" class="d-lbl">env desde var.*</text>
+        <rect x="600" y="254" width="380" height="44" rx="10" class="d-img"/>
+        <text x="616" y="281" class="d-code" style="font-weight:700">docker_image.mongo</text>
+        <text x="964" y="281" text-anchor="end" class="d-lbl">mongo:7</text>
+        <rect x="600" y="310" width="380" height="44" rx="10" class="d-vol"/>
+        <text x="616" y="337" class="d-code" style="font-weight:700">docker_volume.mongo_data</text>
+        <text x="964" y="337" text-anchor="end" class="d-lbl">→ /data/db</text>
+
+        <path d="M320,100 C460,100 460,52 596,52" class="d-line s-cont" marker-end="url(#ah-cont)"/>
+        <path d="M320,126 C460,126 460,108 596,108" class="d-line s-img" marker-end="url(#ah-img)"/>
+        <path d="M320,178 C460,178 460,164 596,164" class="d-line s-net" marker-end="url(#ah-net)"/>
+        <path d="M320,214 C460,214 460,220 596,220" class="d-line s-cont" marker-end="url(#ah-cont)"/>
+        <path d="M320,240 C460,240 460,276 596,276" class="d-line s-img" marker-end="url(#ah-img)"/>
+        <path d="M320,300 C460,300 460,326 596,326" class="d-line s-vol" marker-end="url(#ah-vol)"/>
+        <path d="M320,352 C460,352 460,338 596,338" class="d-line s-vol" marker-end="url(#ah-vol)"/>
+      </svg>
+      </div>
+      <div class="grid cols-3" style="margin-top:12px">
+        <div class="callout tip"><span class="ico">✓</span><p>El contenedor de Mongo se sigue llamando <b>monguito</b> y está en la misma red: <code>app.js</code> se conecta igual que antes.</p></div>
+        <div class="callout info"><span class="ico">i</span><p>Las referencias (<code>docker_network.app.name</code>) le dicen a Terraform en qué orden crear todo. No hace falta ordenarlo vos.</p></div>
+        <div class="callout warn"><span class="ico">!</span><p>Antes de empezar, bajá el compose (<code>docker compose down</code>): los nombres <code>chanchito</code>/<code>monguito</code> y el puerto 3000 no pueden estar ocupados.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= ARCHIVOS ================= -->
+  <section class="block" id="archivos">
+    <div class="section-head">
+      <div class="num" style="--tone:var(--c-file)">2</div>
+      <div class="titles"><h2>Los archivos</h2><p>Creá una carpeta <code>terraform/</code> dentro de <code>docker-example</code> (al lado del <code>Dockerfile</code>).</p></div>
+    </div>
+    <div class="grid cols-2">
+      <div class="card t-file">
+        <h3>versions.tf y providers.tf</h3>
+        <div class="code-label"><span class="file">terraform/versions.tf</span></div>
+        <pre><code data-lang="hcl">terraform {
+  required_version = "&gt;= 1.11"
+
+  required_providers {
+    docker = {
+      source  = "kreuzwerker/docker"
+      version = "~&gt; 3.0"
+    }
+  }
+}</code></pre>
+        <div class="code-label"><span class="file">terraform/providers.tf</span></div>
+        <pre><code data-lang="hcl">provider "docker" {
+  # Windows + Docker Desktop
+  host = "npipe:////.//pipe//docker_engine"
+
+  # Linux / macOS:
+  # host = "unix:///var/run/docker.sock"
+}</code></pre>
+        <div class="code-label"><span class="file">terraform/variables.tf</span></div>
+        <pre><code data-lang="hcl">variable "mongo_user" {
+  type    = string
+  default = "mati"
+}
+
+variable "mongo_password" {
+  type      = string
+  sensitive = true   # se pasa con TF_VAR_mongo_password
+}
+
+variable "app_puerto" {
+  type    = number
+  default = 3000
+}</code></pre>
+      </div>
+      <div class="card t-img">
+        <h3>main.tf y outputs.tf</h3>
+        <div class="code-label"><span class="file">terraform/main.tf</span></div>
+        <pre class="big"><code data-lang="hcl">resource "docker_network" "app" {
+  name = "chanchito-net"
+}
+
+resource "docker_volume" "mongo_data" {
+  name = "mongo-data-tf"
+}
+
+resource "docker_image" "mongo" {
+  name         = "mongo:7"
+  keep_locally = true          # destroy no borra la imagen
+}
+
+resource "docker_image" "chanchito" {
+  name = "chanchito:tf"
+  build {
+    context = "${path.module}/.."   # carpeta del Dockerfile
+  }
+  triggers = {                      # rebuild si cambia el código
+    app = filesha1("${path.module}/../app.js")
+  }
+}
+
+resource "docker_container" "monguito" {
+  name    = "monguito"             # = host en app.js
+  image   = docker_image.mongo.image_id
+  restart = "unless-stopped"
+  env = [
+    "MONGO_INITDB_ROOT_USERNAME=${var.mongo_user}",
+    "MONGO_INITDB_ROOT_PASSWORD=${var.mongo_password}",
+  ]
+  networks_advanced {
+    name = docker_network.app.name
+  }
+  volumes {
+    volume_name    = docker_volume.mongo_data.name
+    container_path = "/data/db"
+  }
+}
+
+resource "docker_container" "chanchito" {
+  name    = "chanchito"
+  image   = docker_image.chanchito.image_id
+  restart = "unless-stopped"
+  ports {
+    internal = 3000
+    external = var.app_puerto
+  }
+  networks_advanced {
+    name = docker_network.app.name
+  }
+  depends_on = [docker_container.monguito]
+}</code></pre>
+        <div class="code-label"><span class="file">terraform/outputs.tf</span></div>
+        <pre><code data-lang="hcl">output "url" {
+  value = "http://localhost:${var.app_puerto}"
+}</code></pre>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= PASOS ================= -->
+  <section class="block" id="pasos" data-search>
+    <div class="section-head">
+      <div class="num" style="--tone:var(--ok)">3</div>
+      <div class="titles"><h2>Paso a paso</h2><p>En PowerShell, desde <code>docker-example/terraform</code>, con Docker Desktop abierto.</p></div>
+    </div>
+    <div class="grid cols-2">
+      <div class="card t-ok">
+        <h3>Levantar</h3>
+        <div class="cmd"><pre><code># 0. Una sola vez: instalar Terraform
+winget install Hashicorp.Terraform</code></pre><div class="what">Cerrá y abrí la terminal después.</div></div>
+        <div class="cmd"><pre><code># 1. Liberar nombres y puertos del compose
+docker compose -f ../docker-compose.yml down</code></pre><div class="what">Sin <code>-v</code>: tus datos del compose quedan en su volumen.</div></div>
+        <div class="cmd"><pre><code># 2. La contraseña (la misma que usa app.js)
+$env:TF_VAR_mongo_password = "&lt;password&gt;"</code></pre><div class="what">Dura lo que dura esa terminal.</div></div>
+        <div class="cmd"><pre><code># 3. Preparar, revisar y aplicar
+terraform init
+terraform fmt
+terraform validate
+terraform plan
+terraform apply</code></pre><div class="what">El plan tiene que decir <b>6 to add</b>. Confirmá con <code>yes</code>.</div></div>
+      </div>
+      <div class="card t-ok">
+        <h3>Probar, mirar y borrar</h3>
+        <div class="cmd"><pre><code># 4. Probar la app
+#   http://localhost:3000/crear  -> crea un documento
+#   http://localhost:3000        -> lista
+terraform output url</code></pre><div class="what">El output te recuerda la URL.</div></div>
+        <div class="cmd"><pre><code># 5. Lo que administra Terraform
+terraform state list
+docker ps</code></pre><div class="what">Los mismos contenedores, ahora creados por Terraform.</div></div>
+        <div class="cmd"><pre><code># 6. Borrar todo lo creado
+terraform destroy</code></pre><div class="what">Borra contenedores, red y volumen (⚠ los datos de Mongo). Las imágenes quedan por <code>keep_locally</code>.</div></div>
+        <div class="callout info"><span class="ico">i</span><p>Se crean <code>.terraform/</code>, <code>.terraform.lock.hcl</code> y <code>terraform.tfstate</code>. Agregá al <code>.gitignore</code> del repo los que no van (ver <a href="04-variables-estado.html#seguridad">Secretos y git</a>).</p></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= EXPERIMENTOS ================= -->
+  <section class="block" id="experimentos" data-search>
+    <div class="section-head">
+      <div class="num" style="--tone:var(--c-vol)">4</div>
+      <div class="titles"><h2>Experimentos para entender el plan</h2><p>Hacé uno, corré <code>terraform plan</code> y mirá qué símbolo aparece.</p></div>
+    </div>
+    <div class="card t-vol wide">
+      <h3>Qué cambiar y qué esperar</h3>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Cambio</th><th>Qué muestra el plan</th><th>Por qué</th></tr></thead>
+          <tbody>
+            <tr><td>Editás <code>app.js</code></td><td><code>-/+</code> imagen y contenedor chanchito</td><td>Cambia el hash en <code>triggers</code> → nueva imagen → contenedor nuevo</td></tr>
+            <tr><td><code>app_puerto = 3001</code> en <code>terraform.tfvars</code></td><td><code>-/+</code> contenedor chanchito</td><td>Los puertos no se editan en un contenedor vivo: se recrea</td></tr>
+            <tr><td><code>name = "mongo:6"</code> en la imagen de Mongo</td><td><code>-/+</code> imagen y monguito</td><td>Los datos sobreviven: están en el volumen</td></tr>
+            <tr><td>Borrás a mano: <code>docker rm -f chanchito</code></td><td><code>+</code> chanchito</td><td>Drift: el estado decía que existía y no está</td></tr>
+            <tr><td>Agregás un <code>output "red"</code> con <code>docker_network.app.name</code></td><td><code>Changes to Outputs: + red</code></td><td>Los outputs no tocan infraestructura: <code>apply</code> solo actualiza el estado</td></tr>
+            <tr><td>Renombrás <code>docker_container.chanchito</code> a <code>.api</code></td><td><code>-</code> chanchito y <code>+</code> api</td><td>Para Terraform es otro recurso. Agregá un bloque <code>moved</code> y pasa a “has moved to”</td></tr>
+            <tr><td>Sacás el bloque del volumen</td><td>Error: lo usa monguito</td><td>Las referencias protegen el orden y la consistencia</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= COMPARACION ================= -->
+  <section class="block" id="comparacion" data-search>
+    <div class="section-head">
+      <div class="num" style="--tone:var(--c-comp)">5</div>
+      <div class="titles"><h2>¿Compose o Terraform?</h2><p>Para correr apps en tu PC, Compose sigue siendo más simple. Esta práctica es para aprender el flujo de Terraform.</p></div>
+    </div>
+    <div class="card t-comp wide">
+      <h3>Comparación</h3>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th></th><th>Docker Compose</th><th>Terraform + provider docker</th></tr></thead>
+          <tbody>
+            <tr><td>Levantar</td><td><code>docker compose up -d</code></td><td><code>terraform apply</code></td></tr>
+            <tr><td>Ver cambios antes</td><td>No</td><td>Sí: <code>terraform plan</code></td></tr>
+            <tr><td>Estado</td><td>Lo lee de Docker</td><td>Archivo <code>terraform.tfstate</code></td></tr>
+            <tr><td>Red y volúmenes</td><td>Automáticos</td><td>Recursos explícitos</td></tr>
+            <tr><td>Desarrollo con recarga</td><td>Cómodo (bind mount + nodemon)</td><td>Posible, pero incómodo</td></tr>
+            <tr><td>Mismo flujo para la nube</td><td>No</td><td>Sí: cambiás el provider por <code>aws</code>, <code>azurerm</code>…</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="callout tip"><span class="ico">✓</span><p>Siguiente paso natural: el mismo proyecto en la nube, por ejemplo con el provider <code>aws</code> creando un bucket S3 o una instancia EC2 (ojo con los costos).</p></div>
+    </div>
+  </section>
+
+  <footer class="foot">
+    <a href="05-modulos-proyecto.html">← Módulos y proyecto</a>
+    <a href="07-problemas.html">Siguiente: Problemas comunes →</a>
+  </footer>
+</main>
+</body>
+</html>

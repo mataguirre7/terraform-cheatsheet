@@ -1,0 +1,387 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="description" content="Variables, outputs y locals de Terraform, precedencia de valores, archivo de estado, bloqueo y backends remotos (S3, Azure, GCS, HCP Terraform).">
+<meta name="theme-color" content="#7b42bc">
+<title>Terraform · Variables y estado</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect x='4' y='4' width='56' height='56' rx='14' fill='%237b42bc'/%3E%3Cg fill='%23fff'%3E%3Cpath d='M14 13l10 5.8v11.6l-10-5.8z'/%3E%3Cpath d='M26 20.4l10 5.8v11.6l-10-5.8z'/%3E%3Cpath d='M26 34.2l10 5.8v11.6l-10-5.8z'/%3E%3Cpath d='M38 26.2l10-5.8v11.6l-10 5.8z' opacity='.7'/%3E%3C/g%3E%3C/svg%3E">
+<link rel="stylesheet" href="assets/style.css">
+<script src="assets/app.js"></script>
+</head>
+<body data-page="vars-state">
+<header class="topbar"></header>
+
+<svg width="0" height="0" style="position:absolute" aria-hidden="true" focusable="false">
+  <defs>
+    <marker id="ah" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="d-head"/></marker>
+    <marker id="ah-ok" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="f-ok"/></marker>
+    <marker id="ah-bad" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="f-bad"/></marker>
+    <marker id="ah-file" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="f-file"/></marker>
+  </defs>
+</svg>
+
+<main class="wrap">
+
+  <div class="hero">
+    <span class="eyebrow">Terraform · Cheatsheet 04</span>
+    <h1>Variables y estado</h1>
+    <p class="lead">Cómo parametrizar la configuración y dónde guarda Terraform lo que ya creó. El estado es lo más delicado de un proyecto: si se pierde o se corrompe, Terraform deja de saber qué administra.</p>
+    <nav class="toc">
+      <a href="#variables">Variables</a>
+      <a href="#precedencia">Precedencia</a>
+      <a href="#outputs">Outputs y locals</a>
+      <a href="#state">El archivo de estado</a>
+      <a href="#lock">Bloqueo</a>
+      <a href="#backends">Backends remotos</a>
+      <a href="#seguridad">Secretos y git</a>
+    </nav>
+  </div>
+
+  <!-- ================= VARIABLES ================= -->
+  <section class="block" id="variables" data-search>
+    <div class="section-head">
+      <div class="num" style="--tone:var(--c-file)">1</div>
+      <div class="titles"><h2>Variables de entrada</h2><p>Se declaran en <code>variables.tf</code> y se usan como <code>var.&lt;nombre&gt;</code>.</p></div>
+    </div>
+    <div class="grid cols-2">
+      <div class="card t-file">
+        <h3>Declaración completa</h3>
+        <div class="code-label"><span class="file">variables.tf</span></div>
+        <pre class="big"><code data-lang="hcl">variable "entorno" {
+  type        = string
+  description = "Nombre del entorno (dev, qa, prod)"
+  default     = "dev"
+
+  validation {
+    condition     = contains(["dev", "qa", "prod"], var.entorno)
+    error_message = "entorno debe ser dev, qa o prod."
+  }
+}
+
+variable "mongo_password" {
+  type      = string
+  sensitive = true      # no se muestra en plan ni en logs
+  # sin default: es obligatoria
+}
+
+variable "replicas" {
+  type     = number
+  default  = 1
+  nullable = false      # no acepta null
+}</code></pre>
+      </div>
+      <div class="card t-file">
+        <h3>Darles valor</h3>
+        <div class="code-label"><span class="file">terraform.tfvars</span><span>se lee solo</span></div>
+        <pre><code data-lang="hcl">entorno  = "dev"
+replicas = 2</code></pre>
+        <div class="code-label"><span class="file">prod.tfvars</span><span>-var-file="prod.tfvars"</span></div>
+        <pre><code data-lang="hcl">entorno  = "prod"
+replicas = 3</code></pre>
+        <div class="cmd"><pre><code># secretos: por variable de entorno, nunca en un archivo versionado
+$env:TF_VAR_mongo_password = "&lt;password&gt;"
+terraform plan</code></pre><div class="what">PowerShell. En Bash: <code>export TF_VAR_mongo_password=…</code></div></div>
+        <div class="callout info"><span class="ico">i</span><p>Si una variable obligatoria no tiene valor por ningún lado, <code>plan</code> te la pregunta por teclado.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= PRECEDENCIA ================= -->
+  <section class="block" id="precedencia">
+    <div class="section-head">
+      <div class="num" style="--tone:var(--c-comp)">2</div>
+      <div class="titles"><h2>Precedencia: quién gana</h2><p>Si la misma variable tiene valor en varios lugares, gana el de más a la derecha.</p></div>
+    </div>
+    <div class="diagram">
+      <div class="svg-scroll">
+      <svg viewBox="0 0 1000 250" role="img" aria-label="Escalera de precedencia: default, TF_VAR, terraform.tfvars, auto.tfvars, y -var o -var-file en la línea de comando, que gana">
+        <rect x="20" y="170" width="150" height="50" rx="10" class="d-plain"/>
+        <text x="95" y="192" text-anchor="middle" class="d-code" style="font-weight:700">default</text>
+        <text x="95" y="210" text-anchor="middle" class="d-lbl">en variables.tf</text>
+
+        <rect x="185" y="140" width="150" height="80" rx="10" class="d-plain"/>
+        <text x="260" y="174" text-anchor="middle" class="d-code" style="font-weight:700">TF_VAR_x</text>
+        <text x="260" y="194" text-anchor="middle" class="d-lbl">variable de</text>
+        <text x="260" y="210" text-anchor="middle" class="d-lbl">entorno</text>
+
+        <rect x="350" y="110" width="150" height="110" rx="10" class="d-file"/>
+        <text x="425" y="152" text-anchor="middle" class="d-code" style="font-weight:700">terraform</text>
+        <text x="425" y="170" text-anchor="middle" class="d-code" style="font-weight:700">.tfvars</text>
+        <text x="425" y="196" text-anchor="middle" class="d-lbl">(y .tfvars.json)</text>
+
+        <rect x="515" y="80" width="150" height="140" rx="10" class="d-file"/>
+        <text x="590" y="132" text-anchor="middle" class="d-code" style="font-weight:700">*.auto</text>
+        <text x="590" y="150" text-anchor="middle" class="d-code" style="font-weight:700">.tfvars</text>
+        <text x="590" y="178" text-anchor="middle" class="d-lbl">en orden</text>
+        <text x="590" y="194" text-anchor="middle" class="d-lbl">alfabético</text>
+
+        <rect x="680" y="50" width="300" height="170" rx="10" class="d-comp"/>
+        <text x="830" y="104" text-anchor="middle" class="d-code" style="font-weight:700">-var  y  -var-file</text>
+        <text x="830" y="130" text-anchor="middle" class="d-sub">en la línea de comando</text>
+        <text x="830" y="154" text-anchor="middle" class="d-lbl">si hay varios, gana</text>
+        <text x="830" y="172" text-anchor="middle" class="d-lbl">el último que escribiste</text>
+        <text x="830" y="204" text-anchor="middle" class="d-title f-ok" style="font-size:14px">GANA</text>
+
+        <path d="M40,36 L960,36" class="d-line s-ok" style="stroke-width:2.4" marker-end="url(#ah-ok)"/>
+        <text x="40" y="26" class="d-lbl">menor prioridad</text>
+        <text x="960" y="26" text-anchor="end" class="d-lbl">mayor prioridad</text>
+      </svg>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= OUTPUTS ================= -->
+  <section class="block" id="outputs" data-search>
+    <div class="section-head">
+      <div class="num" style="--tone:var(--c-net)">3</div>
+      <div class="titles"><h2>Outputs y locals</h2><p>Lo que sale y lo que se calcula por dentro.</p></div>
+    </div>
+    <div class="grid cols-2">
+      <div class="card t-net">
+        <h3>output</h3>
+        <div class="code-label"><span class="file">outputs.tf</span></div>
+        <pre><code data-lang="hcl">output "url" {
+  description = "Dónde abrir la app"
+  value       = "http://localhost:${var.puerto}"
+}
+
+output "mongo_password" {
+  value     = var.mongo_password
+  sensitive = true    # se muestra como (sensitive value)
+}</code></pre>
+        <div class="cmd"><pre><code>terraform output
+terraform output -raw url</code></pre><div class="what">Se muestran al final de cada <code>apply</code> y se consultan cuando quieras.</div></div>
+      </div>
+      <div class="card t-net">
+        <h3>locals</h3>
+        <div class="code-label"><span class="file">locals.tf</span></div>
+        <pre><code data-lang="hcl">locals {
+  prefijo = "${var.proyecto}-${var.entorno}"
+
+  etiquetas = {
+    proyecto = var.proyecto
+    entorno  = var.entorno
+    gestion  = "terraform"
+  }
+}
+
+# uso
+name = "${local.prefijo}-api"</code></pre>
+        <div class="callout info"><span class="ico">i</span><p><b>Variable</b> = lo que se pasa desde afuera. <b>Local</b> = un cálculo interno para no repetir expresiones.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= STATE ================= -->
+  <section class="block" id="state" data-search>
+    <div class="section-head">
+      <div class="num" style="--tone:var(--c-vol)">4</div>
+      <div class="titles"><h2>El archivo de estado</h2><p><code>terraform.tfstate</code>: un JSON que une cada recurso del código con su objeto real.</p></div>
+    </div>
+    <div class="grid cols-2">
+      <div class="card t-vol">
+        <h3>Qué tiene adentro</h3>
+        <pre><code data-lang="plain">{
+  "version": 4,
+  "serial": 12,
+  "resources": [{
+    "type": "docker_container",
+    "name": "chanchito",
+    "instances": [{
+      "attributes": {
+        "id": "4f2a9c…",
+        "name": "chanchito",
+        "env": ["MONGO_PASSWORD=…"]   ← ¡en texto plano!
+      }
+    }]
+  }]
+}</code></pre>
+      </div>
+      <div class="card t-vol">
+        <h3>Reglas de oro</h3>
+        <ul>
+          <li><b>Nunca</b> lo edites a mano: usá <code>terraform state …</code>, <code>moved</code>, <code>import</code> o <code>removed</code>.</li>
+          <li><b>Nunca</b> lo subas a git: puede tener contraseñas, claves y tokens.</li>
+          <li>En equipo, <b>siempre</b> en un backend remoto con bloqueo.</li>
+          <li>Un estado por entorno (dev y prod no comparten estado).</li>
+          <li>Estados chicos: separá redes, bases y apps en proyectos distintos para limitar el daño de un error.</li>
+        </ul>
+        <div class="callout info"><span class="ico">i</span><p><code>terraform.tfstate.backup</code> es la versión anterior, que se guarda sola en el backend local.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= LOCK ================= -->
+  <section class="block" id="lock">
+    <div class="section-head">
+      <div class="num" style="--tone:var(--bad)">5</div>
+      <div class="titles"><h2>Bloqueo del estado</h2><p>Evita que dos <code>apply</code> simultáneos corrompan el estado.</p></div>
+    </div>
+    <div class="diagram">
+      <div class="svg-scroll">
+      <svg viewBox="0 0 1000 230" role="img" aria-label="Vos tomás el lock del estado remoto al aplicar; un compañero que aplica al mismo tiempo recibe Error acquiring the state lock">
+        <rect x="20" y="40" width="200" height="64" rx="12" class="d-cont"/>
+        <text x="120" y="68" text-anchor="middle" class="d-title">Vos</text>
+        <text x="120" y="90" text-anchor="middle" class="d-code">terraform apply</text>
+
+        <rect x="20" y="140" width="200" height="64" rx="12" class="d-plain"/>
+        <text x="120" y="168" text-anchor="middle" class="d-title">Compañero</text>
+        <text x="120" y="190" text-anchor="middle" class="d-code">terraform apply</text>
+
+        <rect x="390" y="50" width="220" height="140" rx="14" class="d-vol"/>
+        <text x="500" y="82" text-anchor="middle" class="d-title">Backend remoto</text>
+        <text x="500" y="108" text-anchor="middle" class="d-code">terraform.tfstate</text>
+        <rect x="430" y="124" width="140" height="44" rx="10" class="d-bad"/>
+        <text x="500" y="151" text-anchor="middle" class="d-code" style="font-weight:700">🔒 lock: vos</text>
+
+        <path d="M220,72 C320,72 320,110 386,110" class="d-line s-ok" style="stroke-width:2.2" marker-end="url(#ah-ok)"/>
+        <text x="300" y="62" text-anchor="middle" class="d-lbl">toma el lock ✓</text>
+        <path d="M220,172 C320,172 320,146 426,146" class="d-line s-bad" style="stroke-dasharray:5 4" marker-end="url(#ah-bad)"/>
+        <text x="236" y="224" class="d-lbl f-bad">Error acquiring the state lock</text>
+
+        <text x="660" y="88" class="d-sub">El lock se libera solo al terminar.</text>
+        <text x="660" y="114" class="d-sub">Si un proceso se cortó y quedó</text>
+        <text x="660" y="134" class="d-sub">trabado:</text>
+        <text x="660" y="162" class="d-code" style="font-weight:700">terraform force-unlock &lt;ID&gt;</text>
+        <text x="660" y="186" class="d-lbl">(solo si nadie más está aplicando)</text>
+      </svg>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= BACKENDS ================= -->
+  <section class="block" id="backends" data-search>
+    <div class="section-head">
+      <div class="num" style="--tone:var(--c-img)">6</div>
+      <div class="titles"><h2>Backends remotos</h2><p>Se configuran en el bloque <code>terraform</code>. Después de cambiarlo: <code>terraform init -migrate-state</code>.</p></div>
+    </div>
+    <div class="grid">
+      <div class="card t-img">
+        <h3>AWS S3</h3>
+        <pre><code data-lang="hcl">terraform {
+  backend "s3" {
+    bucket       = "&lt;mi-bucket-de-estados&gt;"
+    key          = "chanchito/dev/terraform.tfstate"
+    region       = "us-east-1"
+    encrypt      = true
+    use_lockfile = true   # lock nativo en S3
+  }
+}</code></pre>
+        <div class="callout info"><span class="ico">i</span><p><code>use_lockfile</code> reemplaza a la tabla de DynamoDB, que quedó deprecada. Requiere una versión reciente de Terraform (1.11+).</p></div>
+      </div>
+      <div class="card t-img">
+        <h3>Azure Storage</h3>
+        <pre><code data-lang="hcl">terraform {
+  backend "azurerm" {
+    resource_group_name  = "rg-terraform"
+    storage_account_name = "&lt;cuenta&gt;"
+    container_name       = "tfstate"
+    key                  = "chanchito/dev.tfstate"
+  }
+}</code></pre>
+        <div class="callout info"><span class="ico">i</span><p>El bloqueo usa el lease del blob: viene incluido.</p></div>
+      </div>
+      <div class="card t-img">
+        <h3>Google Cloud Storage</h3>
+        <pre><code data-lang="hcl">terraform {
+  backend "gcs" {
+    bucket = "&lt;mi-bucket-de-estados&gt;"
+    prefix = "chanchito/dev"
+  }
+}</code></pre>
+      </div>
+      <div class="card t-img">
+        <h3>HCP Terraform</h3>
+        <pre><code data-lang="hcl">terraform {
+  cloud {
+    organization = "&lt;mi-org&gt;"
+    workspaces {
+      name = "chanchito-dev"
+    }
+  }
+}</code></pre>
+        <div class="callout info"><span class="ico">i</span><p>Servicio de HashiCorp: guarda estado, bloquea y además puede correr los plan/apply. Pide <code>terraform login</code>.</p></div>
+      </div>
+      <div class="card t-img">
+        <h3>Configuración parcial</h3>
+        <pre><code data-lang="hcl"># main.tf: el bloque queda casi vacío
+terraform {
+  backend "s3" {}
+}</code></pre>
+        <pre style="margin-top:8px"><code data-lang="hcl"># backend-dev.hcl
+bucket = "&lt;bucket&gt;"
+key    = "chanchito/dev/terraform.tfstate"
+region = "us-east-1"</code></pre>
+        <div class="cmd"><pre><code>terraform init -backend-config=backend-dev.hcl</code></pre><div class="what">Mismo código, distinto backend por entorno. Los backends <b>no aceptan variables</b>: así se parametrizan.</div></div>
+      </div>
+      <div class="card t-img">
+        <h3>Local (por defecto)</h3>
+        <p>Sin bloque <code>backend</code>, el estado queda en <code>terraform.tfstate</code> junto al código.</p>
+        <ul>
+          <li>Ideal para aprender y para la <a href="06-practica-docker.html">práctica con Docker</a>.</li>
+          <li>No sirve para equipos: no se comparte ni se bloquea entre máquinas.</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= SEGURIDAD ================= -->
+  <section class="block" id="seguridad" data-search>
+    <div class="section-head">
+      <div class="num" style="--tone:var(--warn)">7</div>
+      <div class="titles"><h2>Secretos y qué subir a git</h2><p><code>sensitive</code> solo oculta valores en pantalla: en el estado siguen en texto plano.</p></div>
+    </div>
+    <div class="grid cols-2">
+      <div class="card t-warn">
+        <h3>.gitignore para Terraform</h3>
+        <div class="code-label"><span class="file">.gitignore</span></div>
+        <pre class="big"><code data-lang="plain"># providers y módulos descargados
+.terraform/
+
+# estado (puede tener secretos)
+*.tfstate
+*.tfstate.*
+
+# planes guardados
+tfplan
+*.tfplan
+
+# valores con secretos
+*.tfvars
+!ejemplo.tfvars
+
+# logs y overrides locales
+crash.log
+crash.*.log
+override.tf
+*_override.tf</code></pre>
+      </div>
+      <div class="card t-warn">
+        <h3>Qué sí y qué no</h3>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Archivo</th><th>¿A git?</th></tr></thead>
+            <tbody>
+              <tr><td><code>*.tf</code></td><td>✓ Sí</td></tr>
+              <tr><td><code>.terraform.lock.hcl</code></td><td>✓ Sí (versiones exactas de providers)</td></tr>
+              <tr><td><code>ejemplo.tfvars</code> sin secretos</td><td>✓ Sí, como plantilla</td></tr>
+              <tr><td><code>.terraform/</code></td><td>✕ No</td></tr>
+              <tr><td><code>*.tfstate</code></td><td>✕ Nunca</td></tr>
+              <tr><td><code>*.tfvars</code> con secretos</td><td>✕ No</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <div class="callout tip"><span class="ico">✓</span><p>Para secretos de verdad: <code>TF_VAR_…</code> en CI, o leerlos con un data source de un gestor (AWS Secrets Manager, Azure Key Vault, Vault).</p></div>
+      </div>
+    </div>
+  </section>
+
+  <footer class="foot">
+    <a href="03-lenguaje-hcl.html">← Lenguaje HCL</a>
+    <a href="05-modulos-proyecto.html">Siguiente: Módulos y proyecto →</a>
+  </footer>
+</main>
+</body>
+</html>

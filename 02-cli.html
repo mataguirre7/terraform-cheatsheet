@@ -1,0 +1,317 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="description" content="Comandos de Terraform con buscador: init, plan, apply, destroy, state, import, workspaces, outputs y variables de entorno.">
+<meta name="theme-color" content="#7b42bc">
+<title>Terraform · CLI</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect x='4' y='4' width='56' height='56' rx='14' fill='%237b42bc'/%3E%3Cg fill='%23fff'%3E%3Cpath d='M14 13l10 5.8v11.6l-10-5.8z'/%3E%3Cpath d='M26 20.4l10 5.8v11.6l-10-5.8z'/%3E%3Cpath d='M26 34.2l10 5.8v11.6l-10-5.8z'/%3E%3Cpath d='M38 26.2l10-5.8v11.6l-10 5.8z' opacity='.7'/%3E%3C/g%3E%3C/svg%3E">
+<link rel="stylesheet" href="assets/style.css">
+<script src="assets/app.js"></script>
+</head>
+<body data-page="cli">
+<header class="topbar"></header>
+
+<svg width="0" height="0" style="position:absolute" aria-hidden="true" focusable="false">
+  <defs>
+    <marker id="ah" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="d-head"/></marker>
+    <marker id="ah-comp" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="f-comp"/></marker>
+  </defs>
+</svg>
+
+<main class="wrap">
+
+  <div class="hero">
+    <span class="eyebrow">Terraform · Cheatsheet 02</span>
+    <h1>La CLI de Terraform</h1>
+    <p class="lead">Todos los comandos se ejecutan <b>en la carpeta de los <code>.tf</code></b>. Los valores en <span style="color:#ff8fc8;font-family:var(--mono)">&lt;rosa&gt;</span> se reemplazan. Con OpenTofu, cambiá <code>terraform</code> por <code>tofu</code>.</p>
+    <div class="toolbar">
+      <label class="search">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
+        <input id="q" type="search" placeholder="Buscar: plan, importar, estado, workspace, variable…" autocomplete="off" aria-label="Buscar comando">
+        <span class="hint"><kbd>/</kbd></span>
+      </label>
+    </div>
+    <nav class="toc">
+      <a href="#instalar">Instalar</a>
+      <a href="#ciclo">Ciclo básico</a>
+      <a href="#plan">plan y apply</a>
+      <a href="#init">init</a>
+      <a href="#salida">Outputs y consola</a>
+      <a href="#state">state e import</a>
+      <a href="#workspace">Workspaces</a>
+      <a href="#entorno">Variables de entorno</a>
+      <a href="#ci">CI y extras</a>
+    </nav>
+  </div>
+
+  <!-- ================= INSTALAR ================= -->
+  <section class="block" id="instalar" data-search>
+    <div class="section-head">
+      <div class="num" style="--tone:var(--c-comp)">1</div>
+      <div class="titles"><h2>Instalar y verificar</h2><p>Es un único ejecutable.</p></div>
+    </div>
+    <div class="grid">
+      <div class="card t-comp">
+        <h3>Instalar</h3>
+        <div class="cmd"><pre><code>winget install Hashicorp.Terraform</code></pre><div class="what">Windows. Cerrá y abrí la terminal después.</div></div>
+        <div class="cmd"><pre><code>winget install OpenTofu.Tofu</code></pre><div class="what">La alternativa libre (comando <code>tofu</code>).</div></div>
+        <div class="cmd"><pre><code>brew install hashicorp/tap/terraform</code></pre><div class="what">macOS.</div></div>
+      </div>
+      <div class="card t-comp">
+        <h3>Verificar</h3>
+        <div class="cmd"><pre><code>terraform version</code></pre><div class="what">Versión de Terraform y de los providers del proyecto.</div></div>
+        <div class="cmd"><pre><code>terraform -help
+terraform plan -help</code></pre><div class="what">Ayuda general o de un comando.</div></div>
+        <div class="cmd"><pre><code>terraform -install-autocomplete</code></pre><div class="what">Autocompletado (bash/zsh).</div></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= CICLO ================= -->
+  <section class="block" id="ciclo" data-search>
+    <div class="section-head">
+      <div class="num" style="--tone:var(--c-img)">2</div>
+      <div class="titles"><h2>Ciclo básico</h2><p>En este orden.</p></div>
+    </div>
+    <div class="grid">
+      <div class="card t-img">
+        <h3>Preparar y revisar</h3>
+        <div class="cmd"><pre><code>terraform init</code></pre><div class="what">Descarga providers y módulos, configura el backend. Crea <code>.terraform/</code> y <code>.terraform.lock.hcl</code>.</div></div>
+        <div class="cmd"><pre><code>terraform fmt</code></pre><div class="what">Formatea los <code>.tf</code> con el estilo estándar. <code>-recursive</code> para subcarpetas.</div></div>
+        <div class="cmd"><pre><code>terraform validate</code></pre><div class="what">Revisa sintaxis, tipos y referencias (sin tocar la infra).</div></div>
+      </div>
+      <div class="card t-img">
+        <h3>Aplicar y borrar</h3>
+        <div class="cmd"><pre><code>terraform plan</code></pre><div class="what">Muestra qué cambiaría. No modifica nada.</div></div>
+        <div class="cmd"><pre><code>terraform apply</code></pre><div class="what">Hace un plan, lo muestra y pide confirmación (<code>yes</code>).</div></div>
+        <div class="cmd"><pre><code>terraform destroy</code></pre><div class="what">Borra <b>todo</b> lo que administra este estado. Pide confirmación.</div></div>
+        <div class="cmd"><pre><code>terraform plan -destroy</code></pre><div class="what">Ver qué borraría <code>destroy</code>, sin borrar.</div></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= PLAN ================= -->
+  <section class="block" id="plan" data-search>
+    <div class="section-head">
+      <div class="num" style="--tone:var(--ok)">3</div>
+      <div class="titles"><h2>plan y apply a fondo</h2><p>Guardar el plan garantiza que se aplica exactamente lo que revisaste.</p></div>
+    </div>
+    <div class="diagram">
+      <div class="svg-scroll">
+      <svg viewBox="0 0 1000 150" role="img" aria-label="plan -out guarda el plan en un archivo, lo revisás y apply aplica ese archivo sin volver a preguntar">
+        <rect x="20" y="40" width="250" height="64" rx="12" class="d-comp"/>
+        <text x="145" y="68" text-anchor="middle" class="d-code" style="font-weight:700">plan -out=tfplan</text>
+        <text x="145" y="90" text-anchor="middle" class="d-lbl">calcula y guarda</text>
+        <rect x="375" y="40" width="250" height="64" rx="12" class="d-vol"/>
+        <text x="500" y="68" text-anchor="middle" class="d-code" style="font-weight:700">tfplan</text>
+        <text x="500" y="90" text-anchor="middle" class="d-lbl">revisás · lo aprueba otro</text>
+        <rect x="730" y="40" width="250" height="64" rx="12" class="d-img"/>
+        <text x="855" y="68" text-anchor="middle" class="d-code" style="font-weight:700">apply tfplan</text>
+        <text x="855" y="90" text-anchor="middle" class="d-lbl">sin preguntar, sin recalcular</text>
+        <path d="M270,72 L371,72" class="d-line s-comp" marker-end="url(#ah-comp)"/>
+        <path d="M625,72 L726,72" class="d-line s-comp" marker-end="url(#ah-comp)"/>
+        <text x="500" y="136" text-anchor="middle" class="d-sub">si el estado cambió entre medio, apply rechaza el plan viejo (“Saved plan is stale”)</text>
+      </svg>
+      </div>
+    </div>
+    <div class="grid" style="margin-top:16px">
+      <div class="card t-ok">
+        <h3>Planes guardados</h3>
+        <div class="cmd"><pre><code>terraform plan -out=tfplan
+terraform apply tfplan</code></pre><div class="what">El flujo recomendado en equipo y en CI.</div></div>
+        <div class="cmd"><pre><code>terraform show tfplan
+terraform show -json tfplan</code></pre><div class="what">Ver un plan guardado (legible o JSON).</div></div>
+        <div class="cmd"><pre><code>terraform apply -auto-approve</code></pre><div class="what">Sin confirmación. ⚠ Solo en automatización o entornos descartables.</div></div>
+      </div>
+      <div class="card t-ok">
+        <h3>Pasar variables</h3>
+        <div class="cmd"><pre><code>terraform plan -var="entorno=dev"</code></pre><div class="what">Una variable suelta.</div></div>
+        <div class="cmd"><pre><code>terraform plan -var-file="prod.tfvars"</code></pre><div class="what">Un archivo de valores.</div></div>
+        <div class="cmd"><div class="what">Sin <code>-var</code>: lee <code>terraform.tfvars</code> y <code>*.auto.tfvars</code> solos, y pregunta lo que falte. Orden completo en <a href="04-variables-estado.html#precedencia">Variables y estado</a>.</div></div>
+      </div>
+      <div class="card t-warn">
+        <h3>Planes parciales y especiales</h3>
+        <div class="cmd"><pre><code>terraform apply -replace="docker_container.chanchito"</code></pre><div class="what">Fuerza recrear un recurso (reemplaza al viejo <code>taint</code>).</div></div>
+        <div class="cmd"><pre><code>terraform plan -target="docker_container.chanchito"</code></pre><div class="what">Solo ese recurso y sus dependencias. ⚠ Para emergencias, no para el día a día.</div></div>
+        <div class="cmd"><pre><code>terraform apply -refresh-only</code></pre><div class="what">Actualiza el estado con la realidad (acepta el drift) sin cambiar infraestructura.</div></div>
+        <div class="cmd"><pre><code>terraform plan -detailed-exitcode</code></pre><div class="what">Código de salida 0 = sin cambios, 2 = hay cambios, 1 = error. Útil en CI para detectar drift.</div></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= INIT ================= -->
+  <section class="block" id="init" data-search>
+    <div class="section-head">
+      <div class="num" style="--tone:var(--c-file)">4</div>
+      <div class="titles"><h2>init: providers, módulos y backend</h2><p>Volvé a correrlo cada vez que cambies providers, módulos o el backend.</p></div>
+    </div>
+    <div class="grid">
+      <div class="card t-file">
+        <h3>Variantes de init</h3>
+        <div class="cmd"><pre><code>terraform init -upgrade</code></pre><div class="what">Actualiza providers/módulos a la versión más nueva que permitan tus restricciones (reescribe el lock file).</div></div>
+        <div class="cmd"><pre><code>terraform init -reconfigure</code></pre><div class="what">Cambió el backend y <b>no</b> querés migrar el estado.</div></div>
+        <div class="cmd"><pre><code>terraform init -migrate-state</code></pre><div class="what">Cambió el backend y querés <b>copiar</b> el estado al nuevo (ej. de local a S3).</div></div>
+        <div class="cmd"><pre><code>terraform init -backend-config="backend-dev.hcl"</code></pre><div class="what">Valores del backend desde un archivo (bucket, key…) para no hardcodearlos.</div></div>
+      </div>
+      <div class="card t-file">
+        <h3>Providers y lock file</h3>
+        <div class="cmd"><pre><code>terraform providers</code></pre><div class="what">Qué providers usa el proyecto y de dónde vienen.</div></div>
+        <div class="cmd"><pre><code>terraform providers lock -platform=windows_amd64 -platform=linux_amd64</code></pre><div class="what">Registra en el lock file los hashes de varias plataformas (tu PC Windows + CI Linux).</div></div>
+        <div class="cmd"><pre><code>terraform get -update</code></pre><div class="what">Solo actualizar módulos.</div></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= SALIDA ================= -->
+  <section class="block" id="salida" data-search>
+    <div class="section-head">
+      <div class="num" style="--tone:var(--c-net)">5</div>
+      <div class="titles"><h2>Outputs, consola y grafo</h2><p>Consultar lo que hay sin cambiar nada.</p></div>
+    </div>
+    <div class="grid">
+      <div class="card t-net">
+        <h3>Outputs</h3>
+        <div class="cmd"><pre><code>terraform output</code></pre><div class="what">Todos los outputs del estado actual.</div></div>
+        <div class="cmd"><pre><code>terraform output -raw url</code></pre><div class="what">Un valor sin comillas (para usar en scripts).</div></div>
+        <div class="cmd"><pre><code>terraform output -json</code></pre><div class="what">Todo en JSON (incluye los marcados <code>sensitive</code>).</div></div>
+        <div class="cmd"><pre><code>terraform show</code></pre><div class="what">El estado completo, legible.</div></div>
+      </div>
+      <div class="card t-net">
+        <h3>Consola y grafo</h3>
+        <div class="cmd"><pre><code>terraform console</code></pre><div class="what">REPL para probar expresiones y funciones con tus variables reales.</div></div>
+        <div class="cmd"><pre><code data-lang="plain">&gt; cidrsubnet("10.0.0.0/16", 8, 1)
+"10.0.1.0/24"
+&gt; upper(var.entorno)
+"DEV"</code></pre><div class="what">Ejemplo de sesión. Salís con <code>exit</code>.</div></div>
+        <div class="cmd"><pre><code>terraform graph | dot -Tsvg &gt; grafo.svg</code></pre><div class="what">Grafo de dependencias (requiere Graphviz).</div></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= STATE ================= -->
+  <section class="block" id="state" data-search>
+    <div class="section-head">
+      <div class="num" style="--tone:var(--c-vol)">6</div>
+      <div class="titles"><h2>state e import</h2><p>Operaciones sobre el estado. Hacé un backup antes: <code>terraform state pull &gt; backup.tfstate</code>.</p></div>
+    </div>
+    <div class="grid">
+      <div class="card t-vol">
+        <h3>Inspeccionar el estado</h3>
+        <div class="cmd"><pre><code>terraform state list</code></pre><div class="what">Todos los recursos que administra.</div></div>
+        <div class="cmd"><pre><code>terraform state show docker_container.chanchito</code></pre><div class="what">Atributos de un recurso.</div></div>
+        <div class="cmd"><pre><code>terraform state pull &gt; backup.tfstate</code></pre><div class="what">Descarga el estado (también el remoto).</div></div>
+      </div>
+      <div class="card t-bad">
+        <h3>Modificar el estado</h3>
+        <div class="cmd"><pre><code>terraform state mv docker_container.app docker_container.chanchito</code></pre><div class="what">Renombrar sin destruir. Hoy es mejor un bloque <code>moved</code> en el código.</div></div>
+        <div class="cmd"><pre><code>terraform state rm docker_container.chanchito</code></pre><div class="what">Terraform deja de administrarlo; el recurso real <b>sigue existiendo</b>. Hoy existe el bloque <code>removed</code>.</div></div>
+        <div class="cmd"><pre><code>terraform force-unlock &lt;lock-id&gt;</code></pre><div class="what">Liberar un lock trabado. ⚠ Solo si nadie más está aplicando.</div></div>
+      </div>
+      <div class="card t-img">
+        <h3>Importar lo que ya existe</h3>
+        <div class="cmd"><pre><code data-lang="hcl">import {
+  to = docker_container.monguito
+  id = "&lt;id-del-contenedor&gt;"
+}</code></pre><div class="what">Bloque <code>import</code> en el código: se importa con el próximo <code>apply</code> y queda revisado en el plan.</div></div>
+        <div class="cmd"><pre><code>terraform plan -generate-config-out=generado.tf</code></pre><div class="what">Junto con el bloque <code>import</code>, escribe el <code>resource</code> por vos.</div></div>
+        <div class="cmd"><pre><code>terraform import docker_container.monguito &lt;id&gt;</code></pre><div class="what">Forma vieja por CLI (necesita el <code>resource</code> ya escrito).</div></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= WORKSPACE ================= -->
+  <section class="block" id="workspace" data-search>
+    <div class="section-head">
+      <div class="num" style="--tone:var(--c-comp)">7</div>
+      <div class="titles"><h2>Workspaces</h2><p>Un estado separado por workspace, con el mismo código.</p></div>
+    </div>
+    <div class="grid">
+      <div class="card t-comp">
+        <h3>Comandos</h3>
+        <div class="cmd"><pre><code>terraform workspace list</code></pre><div class="what">El actual tiene <code>*</code>. Siempre existe <code>default</code>.</div></div>
+        <div class="cmd"><pre><code>terraform workspace new dev
+terraform workspace select dev</code></pre><div class="what">Crear / cambiar. <code>select -or-create dev</code> hace las dos.</div></div>
+        <div class="cmd"><pre><code>terraform workspace show
+terraform workspace delete dev</code></pre><div class="what">Ver el actual / borrar (debe estar vacío).</div></div>
+      </div>
+      <div class="card t-comp">
+        <h3>Usarlo en el código</h3>
+        <pre><code data-lang="hcl">locals {
+  entorno = terraform.workspace   # "dev", "prod"…
+}
+
+resource "docker_container" "chanchito" {
+  name = "chanchito-${terraform.workspace}"
+  # ...
+}</code></pre>
+        <div class="callout warn"><span class="ico">!</span><p>Es fácil aplicar en el workspace equivocado. Para dev/prod reales, mucha gente prefiere <b>una carpeta por entorno</b> (ver <a href="05-modulos-proyecto.html#estructura">Módulos y proyecto</a>).</p></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= ENTORNO ================= -->
+  <section class="block" id="entorno" data-search>
+    <div class="section-head">
+      <div class="num" style="--tone:var(--c-file)">8</div>
+      <div class="titles"><h2>Variables de entorno</h2><p>Cambian el comportamiento de la CLI sin tocar el código.</p></div>
+    </div>
+    <div class="card t-file wide">
+      <h3>Las más útiles</h3>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Variable</th><th>Para qué</th><th>Ejemplo (PowerShell)</th></tr></thead>
+          <tbody>
+            <tr><td><code>TF_VAR_&lt;nombre&gt;</code></td><td>Valor de una variable de Terraform (ideal para secretos)</td><td><code>$env:TF_VAR_mongo_password = "&lt;password&gt;"</code></td></tr>
+            <tr><td><code>TF_LOG</code></td><td>Logs internos: <code>TRACE</code>, <code>DEBUG</code>, <code>INFO</code>, <code>WARN</code>, <code>ERROR</code></td><td><code>$env:TF_LOG = "DEBUG"</code></td></tr>
+            <tr><td><code>TF_LOG_PATH</code></td><td>Mandar esos logs a un archivo</td><td><code>$env:TF_LOG_PATH = "tf.log"</code></td></tr>
+            <tr><td><code>TF_CLI_ARGS_plan</code></td><td>Flags extra para un comando</td><td><code>$env:TF_CLI_ARGS_plan = "-parallelism=5"</code></td></tr>
+            <tr><td><code>TF_INPUT</code></td><td><code>0</code> = no preguntar nada (CI)</td><td><code>$env:TF_INPUT = "0"</code></td></tr>
+            <tr><td><code>TF_IN_AUTOMATION</code></td><td>Salida más corta pensada para CI</td><td><code>$env:TF_IN_AUTOMATION = "1"</code></td></tr>
+            <tr><td><code>TF_DATA_DIR</code></td><td>Otra carpeta en vez de <code>.terraform/</code></td><td><code>$env:TF_DATA_DIR = ".tf-dev"</code></td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="callout info"><span class="ico">i</span><p>En Bash: <code>export TF_VAR_mongo_password="&lt;password&gt;"</code>. Para borrarla en PowerShell: <code>Remove-Item Env:TF_LOG</code>.</p></div>
+    </div>
+  </section>
+
+  <!-- ================= CI ================= -->
+  <section class="block" id="ci" data-search>
+    <div class="section-head">
+      <div class="num" style="--tone:var(--c-cont)">9</div>
+      <div class="titles"><h2>CI, tests y extras</h2><p>Lo que suele correr un pipeline.</p></div>
+    </div>
+    <div class="grid">
+      <div class="card t-cont">
+        <h3>Pipeline típico</h3>
+        <pre class="big"><code># en cada pull request
+terraform fmt -check -recursive
+terraform init -input=false
+terraform validate
+terraform plan -input=false -out=tfplan
+
+# al mergear a main
+terraform apply -input=false tfplan</code></pre>
+        <div class="callout tip"><span class="ico">✓</span><p><code>fmt -check</code> falla si algo no está formateado: buen primer filtro.</p></div>
+      </div>
+      <div class="card t-cont">
+        <h3>Otros comandos</h3>
+        <div class="cmd"><pre><code>terraform test</code></pre><div class="what">Corre los tests de <code>*.tftest.hcl</code> (planes o applies de prueba con asserts).</div></div>
+        <div class="cmd"><pre><code>terraform login</code></pre><div class="what">Token para HCP Terraform / registry privado.</div></div>
+        <div class="cmd"><pre><code>terraform metadata functions -json</code></pre><div class="what">Lista todas las funciones disponibles en tu versión.</div></div>
+        <div class="cmd"><pre><code>terraform -chdir=infra/dev plan</code></pre><div class="what">Ejecutar en otra carpeta sin hacer <code>cd</code>.</div></div>
+      </div>
+    </div>
+  </section>
+
+  <p class="empty">No hay comandos que coincidan con la búsqueda.</p>
+
+  <footer class="foot">
+    <a href="01-conceptos.html">← Conceptos</a>
+    <a href="03-lenguaje-hcl.html">Siguiente: Lenguaje HCL →</a>
+  </footer>
+</main>
+</body>
+</html>

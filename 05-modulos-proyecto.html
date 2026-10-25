@@ -1,0 +1,349 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="description" content="Módulos de Terraform, fuentes y versiones, required_providers, lock file y estructura de proyecto con un entorno por carpeta.">
+<meta name="theme-color" content="#7b42bc">
+<title>Terraform · Módulos y proyecto</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect x='4' y='4' width='56' height='56' rx='14' fill='%237b42bc'/%3E%3Cg fill='%23fff'%3E%3Cpath d='M14 13l10 5.8v11.6l-10-5.8z'/%3E%3Cpath d='M26 20.4l10 5.8v11.6l-10-5.8z'/%3E%3Cpath d='M26 34.2l10 5.8v11.6l-10-5.8z'/%3E%3Cpath d='M38 26.2l10-5.8v11.6l-10 5.8z' opacity='.7'/%3E%3C/g%3E%3C/svg%3E">
+<link rel="stylesheet" href="assets/style.css">
+<script src="assets/app.js"></script>
+</head>
+<body data-page="modulos">
+<header class="topbar"></header>
+
+<svg width="0" height="0" style="position:absolute" aria-hidden="true" focusable="false">
+  <defs>
+    <marker id="ah-file" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="f-file"/></marker>
+    <marker id="ah-net" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="f-net"/></marker>
+  </defs>
+</svg>
+
+<main class="wrap">
+
+  <div class="hero">
+    <span class="eyebrow">Terraform · Cheatsheet 05</span>
+    <h1>Módulos y estructura de proyecto</h1>
+    <p class="lead">Un módulo es una carpeta de <code>.tf</code> que se reutiliza como si fuera una función: recibe variables, crea recursos y devuelve outputs.</p>
+    <nav class="toc">
+      <a href="#modulos">Cómo funciona un módulo</a>
+      <a href="#crear">Crear uno</a>
+      <a href="#fuentes">Fuentes</a>
+      <a href="#versiones">Versiones</a>
+      <a href="#estructura">Estructura de proyecto</a>
+      <a href="#practicas">Buenas prácticas</a>
+    </nav>
+  </div>
+
+  <!-- ================= MODULOS ================= -->
+  <section class="block" id="modulos">
+    <div class="section-head">
+      <div class="num" style="--tone:var(--c-comp)">1</div>
+      <div class="titles"><h2>Cómo funciona un módulo</h2><p>Entradas → recursos → salidas. El que llama solo ve las salidas.</p></div>
+    </div>
+    <div class="diagram">
+      <div class="svg-scroll">
+      <svg viewBox="0 0 1000 300" role="img" aria-label="El root module llama al módulo app pasándole variables y usa sus outputs">
+        <rect x="20" y="30" width="360" height="240" rx="14" class="d-comp" style="fill-opacity:.45"/>
+        <text x="40" y="58" class="d-title">Root module</text>
+        <text x="360" y="58" text-anchor="end" class="d-lbl">envs/dev/main.tf</text>
+        <text x="40" y="96" class="d-code"><tspan class="f-comp" style="font-weight:700">module</tspan> "app" {</text>
+        <text x="58" y="120" class="d-code">source = "../../modules/app"</text>
+        <text x="58" y="148" class="d-code f-file" style="font-weight:700">nombre = "chanchito"</text>
+        <text x="58" y="172" class="d-code f-file" style="font-weight:700">puerto = 3000</text>
+        <text x="40" y="196" class="d-code">}</text>
+        <text x="40" y="236" class="d-code">output "url" {</text>
+        <text x="58" y="258" class="d-code">value = <tspan class="f-net" style="font-weight:700">module.app.url</tspan></text>
+
+        <rect x="600" y="30" width="380" height="240" rx="14" class="d-img" style="fill-opacity:.45"/>
+        <text x="620" y="58" class="d-title">Módulo hijo</text>
+        <text x="960" y="58" text-anchor="end" class="d-lbl">modules/app/</text>
+        <rect x="620" y="76" width="340" height="44" rx="10" class="d-file"/>
+        <text x="636" y="103" class="d-code" style="font-weight:700">variables.tf</text>
+        <text x="944" y="103" text-anchor="end" class="d-lbl">nombre, puerto</text>
+        <rect x="620" y="130" width="340" height="66" rx="10" class="d-plain"/>
+        <text x="636" y="157" class="d-code" style="font-weight:700">main.tf</text>
+        <text x="944" y="157" text-anchor="end" class="d-lbl">resources</text>
+        <text x="636" y="182" class="d-lbl">docker_image, docker_container…</text>
+        <rect x="620" y="206" width="340" height="44" rx="10" class="d-net" style="stroke-dasharray:none"/>
+        <text x="636" y="233" class="d-code" style="font-weight:700">outputs.tf</text>
+        <text x="944" y="233" text-anchor="end" class="d-lbl">url</text>
+
+        <path d="M300,160 C450,160 470,98 616,98" class="d-line s-file" style="stroke-width:2.2" marker-end="url(#ah-file)"/>
+        <text x="560" y="86" text-anchor="middle" class="d-lbl f-file">entradas</text>
+        <path d="M616,228 C470,228 450,254 304,254" class="d-line s-net" style="stroke-width:2.2" marker-end="url(#ah-net)"/>
+        <text x="470" y="226" text-anchor="middle" class="d-lbl f-net">salidas</text>
+      </svg>
+      </div>
+      <div class="grid cols-3" style="margin-top:12px">
+        <div class="callout info"><span class="ico">i</span><p>Toda carpeta con <code>.tf</code> es un módulo. La que ejecutás con <code>terraform plan</code> es el <b>root module</b>.</p></div>
+        <div class="callout info"><span class="ico">i</span><p>Los recursos internos se ven en el estado como <code>module.app.docker_container.this</code>.</p></div>
+        <div class="callout warn"><span class="ico">!</span><p>Después de agregar o cambiar un <code>module</code> hay que correr <code>terraform init</code> otra vez.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= CREAR ================= -->
+  <section class="block" id="crear" data-search>
+    <div class="section-head">
+      <div class="num" style="--tone:var(--c-img)">2</div>
+      <div class="titles"><h2>Crear un módulo</h2><p>Tres archivos alcanzan.</p></div>
+    </div>
+    <div class="grid">
+      <div class="card t-file">
+        <h3>variables.tf</h3>
+        <div class="code-label"><span class="file">modules/app/variables.tf</span></div>
+        <pre><code data-lang="hcl">variable "nombre" {
+  type        = string
+  description = "Nombre del contenedor"
+}
+
+variable "imagen" {
+  type = string
+}
+
+variable "puerto" {
+  type    = number
+  default = 3000
+}</code></pre>
+      </div>
+      <div class="card t-img">
+        <h3>main.tf</h3>
+        <div class="code-label"><span class="file">modules/app/main.tf</span></div>
+        <pre><code data-lang="hcl">resource "docker_image" "this" {
+  name         = var.imagen
+  keep_locally = true
+}
+
+resource "docker_container" "this" {
+  name  = var.nombre
+  image = docker_image.this.image_id
+
+  ports {
+    internal = var.puerto
+    external = var.puerto
+  }
+}</code></pre>
+        <div class="callout tip"><span class="ico">✓</span><p>Convención: si el módulo crea uno solo de un tipo, llamalo <code>this</code>.</p></div>
+      </div>
+      <div class="card t-net">
+        <h3>outputs.tf</h3>
+        <div class="code-label"><span class="file">modules/app/outputs.tf</span></div>
+        <pre><code data-lang="hcl">output "url" {
+  value = "http://localhost:${var.puerto}"
+}
+
+output "id" {
+  value = docker_container.this.id
+}</code></pre>
+        <div class="callout info"><span class="ico">i</span><p>Un módulo bien hecho no configura <code>provider</code> adentro: lo hereda del que lo llama.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= FUENTES ================= -->
+  <section class="block" id="fuentes" data-search>
+    <div class="section-head">
+      <div class="num" style="--tone:var(--c-net)">3</div>
+      <div class="titles"><h2>De dónde sale un módulo (source)</h2><p>Mismo bloque <code>module</code>, distintos orígenes.</p></div>
+    </div>
+    <div class="grid cols-2">
+      <div class="card t-net">
+        <h3>Ejemplos de source</h3>
+        <pre class="big"><code data-lang="hcl"># carpeta local (sin version)
+module "app" {
+  source = "./modules/app"
+}
+
+# Terraform Registry (con version)
+module "vpc" {
+  source  = "terraform-aws-modules/vpc/aws"
+  version = "~&gt; 6.0"
+  # ...
+}
+
+# repositorio git en un tag
+module "red" {
+  source = "git::https://github.com/&lt;org&gt;/terraform-red.git?ref=v1.2.0"
+}
+
+# subcarpeta de un repo
+module "db" {
+  source = "github.com/&lt;org&gt;/infra//modules/db?ref=v2.0.0"
+}</code></pre>
+      </div>
+      <div class="card t-net">
+        <h3>Varias instancias de un módulo</h3>
+        <pre class="big"><code data-lang="hcl">module "servicio" {
+  source   = "./modules/app"
+  for_each = {
+    chanchito = { imagen = "chanchito:1", puerto = 3000 }
+    admin     = { imagen = "admin:1",     puerto = 4000 }
+  }
+
+  nombre = each.key
+  imagen = each.value.imagen
+  puerto = each.value.puerto
+}
+
+output "urls" {
+  value = { for k, m in module.servicio : k =&gt; m.url }
+}</code></pre>
+        <div class="callout info"><span class="ico">i</span><p><code>count</code>, <code>for_each</code>, <code>depends_on</code> y <code>providers</code> también funcionan en <code>module</code>.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= VERSIONES ================= -->
+  <section class="block" id="versiones" data-search>
+    <div class="section-head">
+      <div class="num" style="--tone:var(--c-file)">4</div>
+      <div class="titles"><h2>Versiones de Terraform y providers</h2><p>Fijá rangos en el código; el lock file fija la versión exacta.</p></div>
+    </div>
+    <div class="grid cols-2">
+      <div class="card t-file">
+        <h3>versions.tf</h3>
+        <div class="code-label"><span class="file">versions.tf</span></div>
+        <pre class="big"><code data-lang="hcl">terraform {
+  required_version = "&gt;= 1.11"
+
+  required_providers {
+    docker = {
+      source  = "kreuzwerker/docker"
+      version = "~&gt; 3.0"
+    }
+    aws = {
+      source  = "hashicorp/aws"
+      version = "~&gt; 6.0"
+    }
+  }
+}</code></pre>
+        <div class="callout info"><span class="ico">i</span><p><code>source</code> es <code>&lt;organización&gt;/&lt;nombre&gt;</code> en el Registry. Sin organización se asume <code>hashicorp/</code>.</p></div>
+      </div>
+      <div class="card t-file">
+        <h3>Operadores de versión</h3>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Restricción</th><th>Acepta</th></tr></thead>
+            <tbody>
+              <tr><td><code>= 3.0.2</code></td><td>Solo esa versión</td></tr>
+              <tr><td><code>&gt;= 3.0</code></td><td>3.0 o cualquier mayor (incluso 4.x)</td></tr>
+              <tr><td><code>~&gt; 3.0</code></td><td>3.0 hasta antes de 4.0 (3.x)</td></tr>
+              <tr><td><code>~&gt; 3.0.2</code></td><td>3.0.2 hasta antes de 3.1 (solo parches)</td></tr>
+              <tr><td><code>&gt;= 3.0, &lt; 3.5</code></td><td>Rango explícito</td></tr>
+              <tr><td><code>!= 3.1.0</code></td><td>Excluir una versión rota</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <div class="callout tip"><span class="ico">✓</span><p><code>~&gt;</code> es el más usado: deja entrar arreglos sin saltar de versión mayor.</p></div>
+        <div class="callout warn"><span class="ico">!</span><p>Para subir de versión: cambiás la restricción y corrés <code>terraform init -upgrade</code>. Sin <code>-upgrade</code> se respeta el lock file.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= ESTRUCTURA ================= -->
+  <section class="block" id="estructura" data-search>
+    <div class="section-head">
+      <div class="num" style="--tone:var(--c-comp)">5</div>
+      <div class="titles"><h2>Estructura de proyecto</h2><p>Módulos reutilizables + una carpeta por entorno con su propio estado.</p></div>
+    </div>
+    <div class="grid cols-2">
+      <div class="card t-comp">
+        <h3>Árbol sugerido</h3>
+        <pre class="big"><code data-lang="plain">infra/
+├── modules/
+│   ├── app/
+│   │   ├── main.tf
+│   │   ├── variables.tf
+│   │   └── outputs.tf
+│   └── red/
+├── envs/
+│   ├── dev/
+│   │   ├── main.tf          # llama a ../../modules/*
+│   │   ├── backend.tf       # estado de dev
+│   │   ├── versions.tf
+│   │   ├── terraform.tfvars
+│   │   └── .terraform.lock.hcl
+│   └── prod/
+│       └── …                # mismo esquema, otro estado
+├── .gitignore
+└── README.md</code></pre>
+        <div class="cmd"><pre><code>terraform -chdir=envs/dev plan</code></pre><div class="what">Trabajar con un entorno sin hacer <code>cd</code>.</div></div>
+      </div>
+      <div class="card t-comp">
+        <h3>Carpetas por entorno vs workspaces</h3>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th></th><th>Carpeta por entorno</th><th>Workspaces</th></tr></thead>
+            <tbody>
+              <tr><td>Estado</td><td>Separado, incluso en otro backend/cuenta</td><td>Separado, en el mismo backend</td></tr>
+              <tr><td>Diferencias entre entornos</td><td>Explícitas en cada carpeta</td><td>Condicionales con <code>terraform.workspace</code></td></tr>
+              <tr><td>Riesgo de equivocarse</td><td>Bajo: la carpeta indica el entorno</td><td>Más alto: depende de qué workspace está activo</td></tr>
+              <tr><td>Ideal para</td><td>dev / staging / prod reales</td><td>Copias temporales y pruebas</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <h3 style="margin-top:14px">Archivos habituales</h3>
+        <div class="table-wrap">
+          <table>
+            <tbody>
+              <tr><td><code>main.tf</code></td><td>Recursos o llamadas a módulos</td></tr>
+              <tr><td><code>variables.tf</code> / <code>outputs.tf</code></td><td>Entradas y salidas</td></tr>
+              <tr><td><code>versions.tf</code></td><td><code>required_version</code> y providers</td></tr>
+              <tr><td><code>providers.tf</code></td><td>Configuración de providers</td></tr>
+              <tr><td><code>backend.tf</code></td><td>Dónde va el estado</td></tr>
+              <tr><td><code>locals.tf</code> / <code>data.tf</code></td><td>Cálculos y lecturas</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= PRACTICAS ================= -->
+  <section class="block" id="practicas" data-search>
+    <div class="section-head">
+      <div class="num" style="--tone:var(--ok)">6</div>
+      <div class="titles"><h2>Buenas prácticas</h2><p>Lo que evita sustos en producción.</p></div>
+    </div>
+    <div class="grid">
+      <div class="card t-ok">
+        <h3>Código</h3>
+        <ul>
+          <li><code>terraform fmt</code> y <code>validate</code> antes de cada commit (o en CI).</li>
+          <li>Versiones fijadas con <code>~&gt;</code> y lock file en git.</li>
+          <li>Nada hardcodeado que cambie entre entornos: variables.</li>
+          <li><code>description</code> en variables y outputs: es la documentación del módulo.</li>
+          <li>Etiquetá todo (<code>tags</code>/<code>labels</code>) con proyecto, entorno y <code>gestion = "terraform"</code>.</li>
+        </ul>
+      </div>
+      <div class="card t-ok">
+        <h3>Estado y cambios</h3>
+        <ul>
+          <li>Estado remoto con bloqueo y cifrado; acceso restringido.</li>
+          <li>Leé el plan entero; desconfiá de <code>-/+</code> en recursos con datos.</li>
+          <li><code>prevent_destroy</code> en bases de datos y buckets críticos.</li>
+          <li>Nada de cambios manuales en la consola: generan drift.</li>
+          <li><code>-target</code> solo para emergencias.</li>
+        </ul>
+      </div>
+      <div class="card t-ok">
+        <h3>Equipo</h3>
+        <ul>
+          <li>Plan en cada pull request y apply solo desde <code>main</code>.</li>
+          <li>Estados chicos por dominio (red, datos, apps).</li>
+          <li>Módulos versionados con tags git (<code>?ref=v1.2.0</code>).</li>
+          <li>Herramientas útiles: <b>tflint</b> (linter), <b>checkov</b> o <b>trivy</b> (seguridad), <b>terraform-docs</b> (README de módulos).</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <footer class="foot">
+    <a href="04-variables-estado.html">← Variables y estado</a>
+    <a href="06-practica-docker.html">Siguiente: Práctica con Docker →</a>
+  </footer>
+</main>
+</body>
+</html>

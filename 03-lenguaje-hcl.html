@@ -1,0 +1,470 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="description" content="Lenguaje HCL de Terraform: bloques, tipos, referencias, expresiones, count y for_each, dynamic, lifecycle y funciones.">
+<meta name="theme-color" content="#7b42bc">
+<title>Terraform · Lenguaje HCL</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect x='4' y='4' width='56' height='56' rx='14' fill='%237b42bc'/%3E%3Cg fill='%23fff'%3E%3Cpath d='M14 13l10 5.8v11.6l-10-5.8z'/%3E%3Cpath d='M26 20.4l10 5.8v11.6l-10-5.8z'/%3E%3Cpath d='M26 34.2l10 5.8v11.6l-10-5.8z'/%3E%3Cpath d='M38 26.2l10-5.8v11.6l-10 5.8z' opacity='.7'/%3E%3C/g%3E%3C/svg%3E">
+<link rel="stylesheet" href="assets/style.css">
+<script src="assets/app.js"></script>
+</head>
+<body data-page="hcl">
+<header class="topbar"></header>
+
+<svg width="0" height="0" style="position:absolute" aria-hidden="true" focusable="false">
+  <defs>
+    <marker id="ah" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="d-head"/></marker>
+  </defs>
+</svg>
+
+<main class="wrap">
+
+  <div class="hero">
+    <span class="eyebrow">Terraform · Cheatsheet 03</span>
+    <h1>El lenguaje HCL</h1>
+    <p class="lead">HCL (HashiCorp Configuration Language) es declarativo: bloques con argumentos. El orden de los bloques no importa; Terraform arma el orden según las <b>referencias</b> entre recursos.</p>
+    <nav class="toc">
+      <a href="#anatomia">Anatomía de un bloque</a>
+      <a href="#tipos">Tipos</a>
+      <a href="#referencias">Referencias</a>
+      <a href="#expresiones">Expresiones</a>
+      <a href="#count-foreach">count vs for_each</a>
+      <a href="#dynamic">dynamic</a>
+      <a href="#meta">Meta-argumentos</a>
+      <a href="#refactor">moved y removed</a>
+      <a href="#funciones">Funciones</a>
+    </nav>
+  </div>
+
+  <!-- ================= ANATOMIA ================= -->
+  <section class="block" id="anatomia">
+    <div class="section-head">
+      <div class="num" style="--tone:var(--c-comp)">1</div>
+      <div class="titles"><h2>Anatomía de un bloque</h2><p>Tipo, etiquetas y cuerpo con argumentos y bloques anidados.</p></div>
+    </div>
+    <div class="diagram">
+      <div class="svg-scroll">
+      <svg viewBox="0 0 1000 320" role="img" aria-label="Partes de un bloque resource: tipo de bloque, tipo de recurso, nombre local, argumentos, referencias y bloques anidados">
+        <text x="40" y="64" class="d-code" style="font-size:20px;font-weight:700"><tspan class="f-comp">resource</tspan></text>
+        <text x="170" y="64" class="d-code" style="font-size:20px;font-weight:700"><tspan class="f-img">"docker_container"</tspan></text>
+        <text x="420" y="64" class="d-code" style="font-size:20px;font-weight:700"><tspan class="f-cont">"chanchito"</tspan></text>
+        <text x="575" y="64" class="d-code" style="font-size:20px;font-weight:700">{</text>
+
+        <path d="M40,78 L40,86 L140,86 L140,78" class="d-line s-comp"/>
+        <text x="90" y="108" text-anchor="middle" class="d-sub">tipo de bloque</text>
+        <path d="M170,78 L170,86 L388,86 L388,78" class="d-line s-img"/>
+        <text x="279" y="108" text-anchor="middle" class="d-sub">tipo de recurso</text>
+        <text x="279" y="126" text-anchor="middle" class="d-lbl">&lt;provider&gt;_&lt;tipo&gt;</text>
+        <path d="M420,78 L420,86 L554,86 L554,78" class="d-line s-cont"/>
+        <text x="487" y="108" text-anchor="middle" class="d-sub">nombre local</text>
+        <text x="487" y="126" text-anchor="middle" class="d-lbl">lo elegís vos</text>
+
+        <text x="66" y="168" class="d-code" style="font-size:16px">name  = "chanchito"</text>
+        <text x="66" y="196" class="d-code" style="font-size:16px">image = docker_image.app.image_id</text>
+        <text x="66" y="224" class="d-code" style="font-size:16px">ports {</text>
+        <text x="92" y="250" class="d-code" style="font-size:16px">internal = 3000</text>
+        <text x="66" y="276" class="d-code" style="font-size:16px">}</text>
+        <text x="40" y="304" class="d-code" style="font-size:16px;font-weight:700">}</text>
+
+        <path d="M430,163 L612,163" class="d-line" marker-end="url(#ah)" style="stroke-dasharray:4 4"/>
+        <text x="620" y="168" class="d-sub"><tspan class="f-text" style="font-weight:700">argumento</tspan> = valor</text>
+        <path d="M430,191 L612,191" class="d-line s-net" marker-end="url(#ah)" style="stroke-dasharray:4 4"/>
+        <text x="620" y="196" class="d-sub"><tspan class="f-text" style="font-weight:700">referencia</tspan> a otro recurso → crea dependencia</text>
+        <path d="M256,218 L266,218 L266,282 L256,282" class="d-line s-vol"/>
+        <path d="M272,250 L612,250" class="d-line s-vol" marker-end="url(#ah)" style="stroke-dasharray:4 4"/>
+        <text x="620" y="255" class="d-sub"><tspan class="f-text" style="font-weight:700">bloque anidado</tspan> (sin “=”)</text>
+
+        <rect x="540" y="276" width="440" height="36" rx="10" class="d-plain"/>
+        <text x="556" y="299" class="d-code" style="font-weight:700">docker_container.chanchito.id</text>
+        <text x="964" y="299" text-anchor="end" class="d-lbl">así se referencia</text>
+      </svg>
+      </div>
+      <div class="grid cols-3" style="margin-top:12px">
+        <div class="callout info"><span class="ico">i</span><p>Comentarios: <code>#</code> o <code>//</code> para una línea, <code>/* … */</code> para varias.</p></div>
+        <div class="callout info"><span class="ico">i</span><p>Terraform lee <b>todos</b> los <code>.tf</code> de la carpeta como si fueran uno. Los nombres de archivo son solo para ordenarte.</p></div>
+        <div class="callout tip"><span class="ico">✓</span><p>Convención: nombres en <code>snake_case</code>; no repitas el tipo en el nombre (<code>docker_container.chanchito</code>, no <code>…chanchito_container</code>).</p></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= TIPOS ================= -->
+  <section class="block" id="tipos" data-search>
+    <div class="section-head">
+      <div class="num" style="--tone:var(--c-file)">2</div>
+      <div class="titles"><h2>Tipos de datos</h2><p>Se usan sobre todo al declarar variables.</p></div>
+    </div>
+    <div class="grid cols-2">
+      <div class="card t-file">
+        <h3>Primitivos y colecciones</h3>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Tipo</th><th>Ejemplo</th></tr></thead>
+            <tbody>
+              <tr><td><code>string</code></td><td><code>"chanchito"</code></td></tr>
+              <tr><td><code>number</code></td><td><code>3000</code> · <code>0.5</code></td></tr>
+              <tr><td><code>bool</code></td><td><code>true</code> · <code>false</code></td></tr>
+              <tr><td><code>list(string)</code></td><td><code>["a", "b"]</code> (ordenada, admite repetidos)</td></tr>
+              <tr><td><code>set(string)</code></td><td><code>toset(["a", "b"])</code> (sin orden ni repetidos)</td></tr>
+              <tr><td><code>map(number)</code></td><td><code>{ dev = 1, prod = 3 }</code></td></tr>
+              <tr><td><code>object({…})</code></td><td><code>{ nombre = "x", puerto = 80 }</code> con claves fijas</td></tr>
+              <tr><td><code>tuple([…])</code></td><td><code>["x", 80, true]</code> con tipos por posición</td></tr>
+              <tr><td><code>any</code></td><td>Cualquier cosa (evitarlo si se puede)</td></tr>
+              <tr><td><code>null</code></td><td>“Sin valor”: equivale a no poner el argumento</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+      <div class="card t-file">
+        <h3>Tipos complejos en una variable</h3>
+        <pre class="big"><code data-lang="hcl">variable "servicios" {
+  type = map(object({
+    imagen = string
+    puerto = number
+    env    = optional(map(string), {})
+  }))
+  default = {
+    chanchito = { imagen = "chanchito:1", puerto = 3000 }
+    monguito  = { imagen = "mongo:7",     puerto = 27017 }
+  }
+}</code></pre>
+        <div class="callout info"><span class="ico">i</span><p><code>optional(tipo, default)</code> deja que un atributo del objeto no se pase.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= REFERENCIAS ================= -->
+  <section class="block" id="referencias" data-search>
+    <div class="section-head">
+      <div class="num" style="--tone:var(--c-net)">3</div>
+      <div class="titles"><h2>Referencias</h2><p>Cómo apuntar a cada cosa. Usar una referencia crea una dependencia implícita.</p></div>
+    </div>
+    <div class="card t-net wide">
+      <h3>Tabla de referencias</h3>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Sintaxis</th><th>Apunta a</th><th>Ejemplo</th></tr></thead>
+          <tbody>
+            <tr><td><code>var.&lt;nombre&gt;</code></td><td>Una variable de entrada</td><td><code>var.entorno</code></td></tr>
+            <tr><td><code>local.&lt;nombre&gt;</code></td><td>Un valor de <code>locals</code></td><td><code>local.prefijo</code></td></tr>
+            <tr><td><code>&lt;tipo&gt;.&lt;nombre&gt;.&lt;atributo&gt;</code></td><td>Un atributo de un resource</td><td><code>docker_network.app.name</code></td></tr>
+            <tr><td><code>data.&lt;tipo&gt;.&lt;nombre&gt;.&lt;atributo&gt;</code></td><td>Un data source</td><td><code>data.aws_ami.ubuntu.id</code></td></tr>
+            <tr><td><code>module.&lt;nombre&gt;.&lt;output&gt;</code></td><td>Un output de un módulo</td><td><code>module.red.vpc_id</code></td></tr>
+            <tr><td><code>&lt;tipo&gt;.&lt;nombre&gt;[0]</code></td><td>Una instancia con <code>count</code></td><td><code>docker_container.app[0].name</code></td></tr>
+            <tr><td><code>&lt;tipo&gt;.&lt;nombre&gt;["clave"]</code></td><td>Una instancia con <code>for_each</code></td><td><code>docker_container.app["api"].name</code></td></tr>
+            <tr><td><code>count.index</code></td><td>Índice actual (dentro del bloque)</td><td><code>"app-${count.index}"</code></td></tr>
+            <tr><td><code>each.key</code> / <code>each.value</code></td><td>Clave y valor actuales con <code>for_each</code></td><td><code>each.value.puerto</code></td></tr>
+            <tr><td><code>path.module</code></td><td>Carpeta del módulo actual</td><td><code>"${path.module}/scripts/init.sh"</code></td></tr>
+            <tr><td><code>terraform.workspace</code></td><td>Workspace activo</td><td><code>"app-${terraform.workspace}"</code></td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= EXPRESIONES ================= -->
+  <section class="block" id="expresiones" data-search>
+    <div class="section-head">
+      <div class="num" style="--tone:var(--c-img)">4</div>
+      <div class="titles"><h2>Expresiones</h2><p>Lo que podés poner a la derecha de un <code>=</code>.</p></div>
+    </div>
+    <div class="grid">
+      <div class="card t-img">
+        <h3>Strings y condicionales</h3>
+        <pre><code data-lang="hcl"># interpolación
+name = "${var.proyecto}-${var.entorno}"
+
+# condicional:  cond ? si : no
+replicas = var.entorno == "prod" ? 3 : 1
+
+# heredoc (texto de varias líneas)
+script = &lt;&lt;-EOT
+  echo "hola"
+  echo "${var.entorno}"
+EOT</code></pre>
+      </div>
+      <div class="card t-img">
+        <h3>for y splat</h3>
+        <pre><code data-lang="hcl"># lista → lista
+nombres = [for s in var.servicios : upper(s)]
+
+# con filtro
+prod = [for s in var.lista : s if s != "test"]
+
+# lista → mapa
+puertos = { for k, v in var.servicios : k => v.puerto }
+
+# splat: un atributo de todas las instancias
+ids = docker_container.app[*].id</code></pre>
+      </div>
+      <div class="card t-img">
+        <h3>Operadores</h3>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Tipo</th><th>Operadores</th></tr></thead>
+            <tbody>
+              <tr><td>Aritméticos</td><td><code>+ - * / %</code></td></tr>
+              <tr><td>Comparación</td><td><code>== != &lt; &lt;= &gt; &gt;=</code></td></tr>
+              <tr><td>Lógicos</td><td><code>&amp;&amp; || !</code></td></tr>
+            </tbody>
+          </table>
+        </div>
+        <div class="callout info"><span class="ico">i</span><p>No hay <code>if</code> ni bucles “imperativos”: todo se resuelve con condicionales, <code>for</code>, <code>count</code> y <code>for_each</code>.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= COUNT VS FOR_EACH ================= -->
+  <section class="block" id="count-foreach" data-search>
+    <div class="section-head">
+      <div class="num" style="--tone:var(--warn)">5</div>
+      <div class="titles"><h2>count vs for_each</h2><p>Los dos crean varias instancias. La diferencia aparece cuando <b>sacás una del medio</b>.</p></div>
+    </div>
+    <div class="diagram">
+      <div class="svg-scroll">
+      <svg viewBox="0 0 1000 290" role="img" aria-label="Con count, quitar el elemento del medio desplaza los índices y modifica o destruye otros; con for_each solo se destruye el quitado">
+        <text x="20" y="28" class="d-title">count = length(["a", "b", "c"])  →  quitás "b"</text>
+        <text x="20" y="66" class="d-lbl">antes</text>
+        <rect x="80" y="44" width="120" height="36" rx="8" class="d-img"/><text x="140" y="67" text-anchor="middle" class="d-code">app[0] = a</text>
+        <rect x="210" y="44" width="120" height="36" rx="8" class="d-img"/><text x="270" y="67" text-anchor="middle" class="d-code">app[1] = b</text>
+        <rect x="340" y="44" width="120" height="36" rx="8" class="d-img"/><text x="400" y="67" text-anchor="middle" class="d-code">app[2] = c</text>
+        <text x="20" y="122" class="d-lbl">después</text>
+        <rect x="80" y="100" width="120" height="36" rx="8" class="d-ok"/><text x="140" y="123" text-anchor="middle" class="d-code">app[0] = a</text>
+        <rect x="210" y="100" width="120" height="36" rx="8" class="d-vol"/><text x="270" y="123" text-anchor="middle" class="d-code">app[1] = c ~</text>
+        <rect x="340" y="100" width="120" height="36" rx="8" class="d-bad" style="stroke-dasharray:5 4"/><text x="400" y="123" text-anchor="middle" class="d-code">app[2] −</text>
+        <text x="270" y="162" text-anchor="middle" class="d-sub">“b” se convierte en “c” y “c” se destruye:</text>
+        <text x="270" y="182" text-anchor="middle" class="d-sub f-bad" style="font-weight:700">tocás 2 recursos que no querías tocar</text>
+
+        <path d="M500,24 L500,196" class="d-line" style="stroke-dasharray:3 6;stroke-width:1"/>
+
+        <text x="540" y="28" class="d-title">for_each = toset(["a", "b", "c"])  →  quitás "b"</text>
+        <text x="540" y="66" class="d-lbl">antes</text>
+        <rect x="600" y="44" width="120" height="36" rx="8" class="d-img"/><text x="660" y="67" text-anchor="middle" class="d-code">app["a"]</text>
+        <rect x="730" y="44" width="120" height="36" rx="8" class="d-img"/><text x="790" y="67" text-anchor="middle" class="d-code">app["b"]</text>
+        <rect x="860" y="44" width="120" height="36" rx="8" class="d-img"/><text x="920" y="67" text-anchor="middle" class="d-code">app["c"]</text>
+        <text x="540" y="122" class="d-lbl">después</text>
+        <rect x="600" y="100" width="120" height="36" rx="8" class="d-ok"/><text x="660" y="123" text-anchor="middle" class="d-code">app["a"]</text>
+        <rect x="730" y="100" width="120" height="36" rx="8" class="d-bad" style="stroke-dasharray:5 4"/><text x="790" y="123" text-anchor="middle" class="d-code">app["b"] −</text>
+        <rect x="860" y="100" width="120" height="36" rx="8" class="d-ok"/><text x="920" y="123" text-anchor="middle" class="d-code">app["c"]</text>
+        <text x="790" y="162" text-anchor="middle" class="d-sub">cada instancia se identifica por su clave:</text>
+        <text x="790" y="182" text-anchor="middle" class="d-sub f-ok" style="font-weight:700">solo se destruye la que sacaste</text>
+
+        <text x="500" y="232" text-anchor="middle" class="d-sub">Regla práctica:</text>
+        <text x="500" y="256" text-anchor="middle" class="d-code"><tspan style="font-weight:700">count</tspan> para “N copias iguales” o “0/1” (crear o no) · <tspan style="font-weight:700">for_each</tspan> para colecciones con identidad</text>
+      </svg>
+      </div>
+    </div>
+    <div class="grid cols-3" style="margin-top:16px">
+      <div class="card t-warn">
+        <h3>count</h3>
+        <pre><code data-lang="hcl">resource "docker_container" "worker" {
+  count = 3
+  name  = "worker-${count.index}"
+  image = docker_image.app.image_id
+}
+
+# crear o no crear
+count = var.crear_db ? 1 : 0</code></pre>
+      </div>
+      <div class="card t-warn">
+        <h3>for_each con set</h3>
+        <pre><code data-lang="hcl">resource "docker_volume" "datos" {
+  for_each = toset(["mongo", "redis"])
+  name     = "${each.key}-data"
+}</code></pre>
+        <div class="callout info"><span class="ico">i</span><p>Con un set, <code>each.key</code> y <code>each.value</code> son iguales.</p></div>
+      </div>
+      <div class="card t-warn">
+        <h3>for_each con map</h3>
+        <pre><code data-lang="hcl">resource "docker_container" "svc" {
+  for_each = var.servicios
+  name     = each.key
+  image    = each.value.imagen
+}</code></pre>
+        <div class="callout warn"><span class="ico">!</span><p><code>for_each</code> acepta <b>map o set</b>, no listas: convertí con <code>toset()</code>.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= DYNAMIC ================= -->
+  <section class="block" id="dynamic" data-search>
+    <div class="section-head">
+      <div class="num" style="--tone:var(--c-vol)">6</div>
+      <div class="titles"><h2>Bloques dynamic</h2><p>Repetir un bloque anidado a partir de una colección.</p></div>
+    </div>
+    <div class="grid cols-2">
+      <div class="card t-vol">
+        <h3>Ejemplo: varios puertos</h3>
+        <pre class="big"><code data-lang="hcl">variable "puertos" {
+  default = { "3000" = 3000, "9229" = 9229 }   # interno = externo
+}
+
+resource "docker_container" "chanchito" {
+  name  = "chanchito"
+  image = docker_image.app.image_id
+
+  dynamic "ports" {
+    for_each = var.puertos
+    content {
+      internal = ports.key
+      external = ports.value
+    }
+  }
+}</code></pre>
+      </div>
+      <div class="card t-vol">
+        <h3>Cómo leerlo</h3>
+        <ul>
+          <li><code>dynamic "ports"</code>: el nombre del bloque anidado a generar.</li>
+          <li><code>for_each</code>: la colección a recorrer.</li>
+          <li><code>content { }</code>: el contenido de cada bloque generado.</li>
+          <li>Dentro se usa <code>&lt;nombre&gt;.key</code> y <code>&lt;nombre&gt;.value</code> (acá <code>ports.key</code>).</li>
+        </ul>
+        <div class="callout warn"><span class="ico">!</span><p>No abuses: si el bloque es fijo, escribilo a mano. <code>dynamic</code> hace el código más difícil de leer.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= META ================= -->
+  <section class="block" id="meta" data-search>
+    <div class="section-head">
+      <div class="num" style="--tone:var(--c-comp)">7</div>
+      <div class="titles"><h2>Meta-argumentos</h2><p>Funcionan en cualquier <code>resource</code> (y varios en <code>module</code>).</p></div>
+    </div>
+    <div class="grid">
+      <div class="card t-comp">
+        <h3>depends_on y provider</h3>
+        <pre><code data-lang="hcl">resource "docker_container" "chanchito" {
+  # dependencia que Terraform no puede deducir
+  depends_on = [docker_container.monguito]
+
+  # usar una configuración alternativa del provider
+  provider = docker.remoto
+}
+
+provider "docker" {
+  alias = "remoto"
+  host  = "ssh://usuario@servidor"
+}</code></pre>
+        <div class="callout info"><span class="ico">i</span><p>Si ya usás una referencia (<code>docker_network.app.name</code>), la dependencia es automática: no hace falta <code>depends_on</code>.</p></div>
+      </div>
+      <div class="card t-comp">
+        <h3>lifecycle</h3>
+        <pre><code data-lang="hcl">lifecycle {
+  create_before_destroy = true     # crea el nuevo antes de borrar el viejo
+  prevent_destroy       = true     # error si un plan quiere destruirlo
+  ignore_changes        = [env]    # no pelear con cambios hechos afuera
+  replace_triggered_by  = [docker_image.app.image_id]
+}</code></pre>
+        <div class="table-wrap">
+          <table>
+            <tbody>
+              <tr><td><code>prevent_destroy</code></td><td>Para bases de datos y buckets importantes</td></tr>
+              <tr><td><code>ignore_changes</code></td><td>Atributos que modifica otra herramienta</td></tr>
+              <tr><td><code>replace_triggered_by</code></td><td>Recrear cuando cambia otro recurso</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+      <div class="card t-comp">
+        <h3>Validaciones</h3>
+        <pre><code data-lang="hcl">resource "docker_container" "chanchito" {
+  # ...
+  lifecycle {
+    precondition {
+      condition     = var.puerto &gt; 1024
+      error_message = "Usá un puerto mayor a 1024."
+    }
+  }
+}
+
+check "app_responde" {
+  data "http" "home" { url = "http://localhost:3000" }
+  assert {
+    condition     = data.http.home.status_code == 200
+    error_message = "chanchito no responde."
+  }
+}</code></pre>
+        <div class="callout info"><span class="ico">i</span><p><code>check</code> solo avisa (warning); <code>precondition</code>/<code>postcondition</code> frenan el plan o el apply.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= REFACTOR ================= -->
+  <section class="block" id="refactor" data-search>
+    <div class="section-head">
+      <div class="num" style="--tone:var(--ok)">8</div>
+      <div class="titles"><h2>Refactorizar sin destruir: moved y removed</h2><p>Cambiar nombres o soltar recursos quedando registrado en el código.</p></div>
+    </div>
+    <div class="grid cols-2">
+      <div class="card t-ok">
+        <h3>moved (renombrar)</h3>
+        <pre><code data-lang="hcl"># renombraste docker_container.app → docker_container.chanchito
+moved {
+  from = docker_container.app
+  to   = docker_container.chanchito
+}
+
+# pasar de count a for_each
+moved {
+  from = docker_container.svc[0]
+  to   = docker_container.svc["chanchito"]
+}</code></pre>
+        <div class="callout tip"><span class="ico">✓</span><p>Sin <code>moved</code>, renombrar = destruir el viejo y crear uno nuevo.</p></div>
+      </div>
+      <div class="card t-ok">
+        <h3>removed (dejar de administrar)</h3>
+        <pre><code data-lang="hcl">removed {
+  from = docker_volume.viejo
+  lifecycle {
+    destroy = false   # no lo borra, solo lo saca del estado
+  }
+}</code></pre>
+        <div class="callout info"><span class="ico">i</span><p>Es la versión revisable de <code>terraform state rm</code>: queda en el código y aparece en el plan.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= FUNCIONES ================= -->
+  <section class="block" id="funciones" data-search>
+    <div class="section-head">
+      <div class="num" style="--tone:var(--c-file)">9</div>
+      <div class="titles"><h2>Funciones más usadas</h2><p>Probalas en <code>terraform console</code>. No se pueden crear funciones propias.</p></div>
+    </div>
+    <div class="card t-file wide">
+      <h3>Referencia rápida</h3>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Función</th><th>Qué hace</th><th>Ejemplo → resultado</th></tr></thead>
+          <tbody>
+            <tr><td><code>format</code></td><td>Texto con formato</td><td><code>format("app-%02d", 3)</code> → <code>"app-03"</code></td></tr>
+            <tr><td><code>join</code> / <code>split</code></td><td>Unir / separar texto</td><td><code>join(",", ["a","b"])</code> → <code>"a,b"</code></td></tr>
+            <tr><td><code>lower</code> / <code>upper</code> / <code>replace</code></td><td>Transformar texto</td><td><code>replace("a_b", "_", "-")</code> → <code>"a-b"</code></td></tr>
+            <tr><td><code>length</code></td><td>Cantidad de elementos</td><td><code>length(["a","b"])</code> → <code>2</code></td></tr>
+            <tr><td><code>concat</code> / <code>flatten</code></td><td>Unir listas / aplanar</td><td><code>flatten([[1],[2,3]])</code> → <code>[1,2,3]</code></td></tr>
+            <tr><td><code>merge</code></td><td>Unir mapas (el último gana)</td><td><code>merge(local.tags, { env = "dev" })</code></td></tr>
+            <tr><td><code>lookup</code></td><td>Valor de un mapa con default</td><td><code>lookup(var.tamanos, "prod", "small")</code></td></tr>
+            <tr><td><code>keys</code> / <code>values</code></td><td>Claves / valores de un mapa</td><td><code>keys({a=1})</code> → <code>["a"]</code></td></tr>
+            <tr><td><code>toset</code> / <code>tolist</code> / <code>tomap</code></td><td>Convertir tipos</td><td><code>toset(["a","a"])</code> → <code>["a"]</code></td></tr>
+            <tr><td><code>coalesce</code></td><td>El primer valor no vacío</td><td><code>coalesce(var.nombre, "default")</code></td></tr>
+            <tr><td><code>try</code> / <code>can</code></td><td>Valor alternativo si una expresión falla</td><td><code>try(var.cfg.puerto, 3000)</code></td></tr>
+            <tr><td><code>file</code> / <code>templatefile</code></td><td>Leer un archivo / con variables</td><td><code>templatefile("${path.module}/init.tpl", { env = "dev" })</code></td></tr>
+            <tr><td><code>jsonencode</code> / <code>yamlencode</code></td><td>Convertir a JSON / YAML</td><td><code>jsonencode({ a = 1 })</code> → <code>"{\"a\":1}"</code></td></tr>
+            <tr><td><code>cidrsubnet</code></td><td>Calcular subredes</td><td><code>cidrsubnet("10.0.0.0/16", 8, 2)</code> → <code>"10.0.2.0/24"</code></td></tr>
+            <tr><td><code>timestamp</code></td><td>Fecha actual (cambia en cada plan)</td><td><code>timestamp()</code></td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </section>
+
+  <p class="empty">No hay resultados para esa búsqueda.</p>
+
+  <footer class="foot">
+    <a href="02-cli.html">← CLI</a>
+    <a href="04-variables-estado.html">Siguiente: Variables y estado →</a>
+  </footer>
+</main>
+</body>
+</html>

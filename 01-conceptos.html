@@ -1,0 +1,362 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="description" content="Conceptos de Terraform con diagramas: infraestructura como código, flujo init/plan/apply, providers, estado y glosario.">
+<meta name="theme-color" content="#7b42bc">
+<title>Terraform · Conceptos</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect x='4' y='4' width='56' height='56' rx='14' fill='%237b42bc'/%3E%3Cg fill='%23fff'%3E%3Cpath d='M14 13l10 5.8v11.6l-10-5.8z'/%3E%3Cpath d='M26 20.4l10 5.8v11.6l-10-5.8z'/%3E%3Cpath d='M26 34.2l10 5.8v11.6l-10-5.8z'/%3E%3Cpath d='M38 26.2l10-5.8v11.6l-10 5.8z' opacity='.7'/%3E%3C/g%3E%3C/svg%3E">
+<link rel="stylesheet" href="assets/style.css">
+<script src="assets/app.js"></script>
+</head>
+<body data-page="conceptos">
+<header class="topbar"></header>
+
+<svg width="0" height="0" style="position:absolute" aria-hidden="true" focusable="false">
+  <defs>
+    <marker id="ah" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="d-head"/></marker>
+    <marker id="ah-img" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="f-img"/></marker>
+    <marker id="ah-comp" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="f-comp"/></marker>
+    <marker id="ah-cont" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="f-cont"/></marker>
+    <marker id="ah-vol" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="f-vol"/></marker>
+    <marker id="ah-file" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="f-file"/></marker>
+  </defs>
+</svg>
+
+<main class="wrap">
+
+  <div class="hero">
+    <span class="eyebrow">Terraform · Cheatsheet 01</span>
+    <h1>Conceptos clave de Terraform</h1>
+    <p class="lead">Terraform es <b>infraestructura como código</b>: describís en archivos <code>.tf</code> los servidores, redes, bases de datos o contenedores que querés, y Terraform los crea, modifica o borra para que la realidad coincida con el código.</p>
+    <nav class="toc">
+      <a href="#flujo">Flujo de trabajo</a>
+      <a href="#arquitectura">Cómo funciona</a>
+      <a href="#estado">Deseado vs real</a>
+      <a href="#plan">Leer un plan</a>
+      <a href="#glosario">Glosario</a>
+      <a href="#ecosistema">Terraform, Docker y Kubernetes</a>
+    </nav>
+  </div>
+
+  <!-- ================= FLUJO ================= -->
+  <section class="block" id="flujo">
+    <div class="section-head">
+      <div class="num" style="--tone:var(--c-comp)">1</div>
+      <div class="titles"><h2>El flujo de trabajo</h2><p>Cuatro comandos que vas a repetir siempre.</p></div>
+    </div>
+    <div class="diagram">
+      <div class="svg-scroll">
+      <svg viewBox="0 0 1000 250" role="img" aria-label="Escribís main.tf, terraform init descarga providers, plan muestra los cambios, apply los ejecuta sobre la infraestructura">
+        <path d="M905,86 L905,40 L100,40 L100,82" class="d-line" style="stroke-dasharray:6 5" marker-end="url(#ah)"/>
+        <text x="502" y="30" text-anchor="middle" class="d-lbl">cambiás el código y repetís plan → apply</text>
+
+        <rect x="20" y="86" width="160" height="84" rx="12" class="d-file"/>
+        <text x="100" y="116" text-anchor="middle" class="d-code" style="font-weight:700">main.tf</text>
+        <text x="100" y="138" text-anchor="middle" class="d-sub">lo que querés</text>
+        <text x="100" y="157" text-anchor="middle" class="d-lbl">HCL</text>
+
+        <rect x="230" y="86" width="150" height="84" rx="12" class="d-plain"/>
+        <text x="305" y="116" text-anchor="middle" class="d-code" style="font-weight:700">init</text>
+        <text x="305" y="138" text-anchor="middle" class="d-sub">baja providers</text>
+        <text x="305" y="157" text-anchor="middle" class="d-lbl">y prepara backend</text>
+
+        <rect x="430" y="86" width="150" height="84" rx="12" class="d-comp"/>
+        <text x="505" y="116" text-anchor="middle" class="d-code" style="font-weight:700">plan</text>
+        <text x="505" y="138" text-anchor="middle" class="d-sub">qué cambiaría</text>
+        <text x="505" y="157" text-anchor="middle" class="d-lbl">+  ~  -</text>
+
+        <rect x="630" y="86" width="150" height="84" rx="12" class="d-img"/>
+        <text x="705" y="116" text-anchor="middle" class="d-code" style="font-weight:700">apply</text>
+        <text x="705" y="138" text-anchor="middle" class="d-sub">lo ejecuta</text>
+        <text x="705" y="157" text-anchor="middle" class="d-lbl">y guarda el estado</text>
+
+        <rect x="830" y="86" width="150" height="84" rx="12" class="d-cont"/>
+        <text x="905" y="116" text-anchor="middle" class="d-title" style="font-size:14px">Infraestructura</text>
+        <text x="905" y="138" text-anchor="middle" class="d-sub">AWS, Azure, GCP…</text>
+        <text x="905" y="157" text-anchor="middle" class="d-lbl">o Docker local</text>
+
+        <path d="M180,128 L226,128" class="d-line s-file" marker-end="url(#ah-file)"/>
+        <path d="M380,128 L426,128" class="d-line" marker-end="url(#ah)"/>
+        <path d="M580,128 L626,128" class="d-line s-comp" marker-end="url(#ah-comp)"/>
+        <path d="M780,128 L826,128" class="d-line s-img" marker-end="url(#ah-img)"/>
+
+        <text x="305" y="205" text-anchor="middle" class="d-lbl">1 vez por proyecto</text>
+        <text x="305" y="223" text-anchor="middle" class="d-lbl">(o al cambiar providers)</text>
+        <text x="505" y="205" text-anchor="middle" class="d-lbl">no toca nada,</text>
+        <text x="505" y="223" text-anchor="middle" class="d-lbl">solo muestra</text>
+        <text x="705" y="205" text-anchor="middle" class="d-lbl">pide confirmar</text>
+        <text x="705" y="223" text-anchor="middle" class="d-lbl">(escribí “yes”)</text>
+        <text x="905" y="205" text-anchor="middle" class="d-lbl">terraform destroy</text>
+        <text x="905" y="223" text-anchor="middle" class="d-lbl">la borra toda</text>
+      </svg>
+      </div>
+      <div class="grid cols-3" style="margin-top:12px">
+        <div class="callout tip"><span class="ico">✓</span><p>Antes del plan: <code>terraform fmt</code> (formatea) y <code>terraform validate</code> (revisa sintaxis y referencias).</p></div>
+        <div class="callout info"><span class="ico">i</span><p><b>Declarativo:</b> no escribís “creá un servidor”, escribís “tiene que existir este servidor”. Si ya existe igual, no hace nada.</p></div>
+        <div class="callout warn"><span class="ico">!</span><p><code>apply</code> y <code>destroy</code> tocan infraestructura real (y pueden costar plata). Leé siempre el plan antes de confirmar.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= ARQUITECTURA ================= -->
+  <section class="block" id="arquitectura">
+    <div class="section-head">
+      <div class="num" style="--tone:var(--c-img)">2</div>
+      <div class="titles"><h2>Cómo funciona por dentro</h2><p>Terraform no sabe nada de AWS ni de Docker: delega en <b>providers</b>, plugins que hablan con cada API.</p></div>
+    </div>
+    <div class="diagram">
+      <div class="svg-scroll">
+      <svg viewBox="0 0 1000 340" role="img" aria-label="La configuración entra a Terraform Core, que usa el estado y llama a providers; cada provider habla con la API de su plataforma">
+        <rect x="20" y="90" width="170" height="120" rx="12" class="d-file"/>
+        <text x="105" y="120" text-anchor="middle" class="d-title">Configuración</text>
+        <text x="105" y="146" text-anchor="middle" class="d-lbl">main.tf</text>
+        <text x="105" y="166" text-anchor="middle" class="d-lbl">variables.tf</text>
+        <text x="105" y="186" text-anchor="middle" class="d-lbl">*.tfvars</text>
+        <path d="M190,150 L256,150" class="d-line s-file" marker-end="url(#ah-file)"/>
+
+        <rect x="260" y="60" width="220" height="180" rx="14" class="d-comp"/>
+        <text x="370" y="92" text-anchor="middle" class="d-title">Terraform Core</text>
+        <text x="370" y="124" text-anchor="middle" class="d-sub">1. lee la configuración</text>
+        <text x="370" y="148" text-anchor="middle" class="d-sub">2. la compara con el estado</text>
+        <text x="370" y="172" text-anchor="middle" class="d-sub">3. arma el plan (grafo)</text>
+        <text x="370" y="196" text-anchor="middle" class="d-sub">4. llama a los providers</text>
+
+        <path d="M370,240 L370,272" class="d-line s-vol" marker-start="url(#ah-vol)" marker-end="url(#ah-vol)"/>
+        <rect x="275" y="276" width="190" height="56" rx="12" class="d-vol"/>
+        <text x="370" y="300" text-anchor="middle" class="d-code" style="font-weight:700">terraform.tfstate</text>
+        <text x="370" y="320" text-anchor="middle" class="d-lbl">lo que ya creó</text>
+
+        <text x="650" y="26" text-anchor="middle" class="d-lbl">se descargan del Registry con init</text>
+        <rect x="560" y="40" width="180" height="58" rx="12" class="d-img"/>
+        <text x="650" y="66" text-anchor="middle" class="d-code" style="font-weight:700">hashicorp/aws</text>
+        <text x="650" y="86" text-anchor="middle" class="d-lbl">provider</text>
+        <rect x="560" y="121" width="180" height="58" rx="12" class="d-img"/>
+        <text x="650" y="147" text-anchor="middle" class="d-code" style="font-weight:700">hashicorp/azurerm</text>
+        <text x="650" y="167" text-anchor="middle" class="d-lbl">provider</text>
+        <rect x="560" y="202" width="180" height="58" rx="12" class="d-img"/>
+        <text x="650" y="228" text-anchor="middle" class="d-code" style="font-weight:700">kreuzwerker/docker</text>
+        <text x="650" y="248" text-anchor="middle" class="d-lbl">provider</text>
+
+        <path d="M480,130 C520,130 520,69 556,69" class="d-line s-comp" marker-end="url(#ah-comp)"/>
+        <path d="M480,150 L556,150" class="d-line s-comp" marker-end="url(#ah-comp)"/>
+        <path d="M480,170 C520,170 520,231 556,231" class="d-line s-comp" marker-end="url(#ah-comp)"/>
+
+        <rect x="810" y="40" width="170" height="58" rx="12" class="d-cont"/>
+        <text x="895" y="74" text-anchor="middle" class="d-title" style="font-size:14px">API de AWS</text>
+        <rect x="810" y="121" width="170" height="58" rx="12" class="d-cont"/>
+        <text x="895" y="155" text-anchor="middle" class="d-title" style="font-size:14px">API de Azure</text>
+        <rect x="810" y="202" width="170" height="58" rx="12" class="d-cont"/>
+        <text x="895" y="236" text-anchor="middle" class="d-title" style="font-size:14px">Docker Engine</text>
+
+        <path d="M740,69 L806,69" class="d-line s-cont" marker-end="url(#ah-cont)"/>
+        <path d="M740,150 L806,150" class="d-line s-cont" marker-end="url(#ah-cont)"/>
+        <path d="M740,231 L806,231" class="d-line s-cont" marker-end="url(#ah-cont)"/>
+      </svg>
+      </div>
+      <div class="callout info"><span class="ico">i</span><p>Hay miles de providers en el <b>Terraform Registry</b> (<code>registry.terraform.io</code>): nubes, GitHub, Cloudflare, Kubernetes, bases de datos… Todos se usan con la misma sintaxis.</p></div>
+    </div>
+  </section>
+
+  <!-- ================= ESTADO ================= -->
+  <section class="block" id="estado">
+    <div class="section-head">
+      <div class="num" style="--tone:var(--c-vol)">3</div>
+      <div class="titles"><h2>Estado deseado, estado guardado y estado real</h2><p>El <b>plan</b> es la diferencia entre lo que pide el código y lo que existe.</p></div>
+    </div>
+    <div class="diagram">
+      <div class="svg-scroll">
+      <svg viewBox="0 0 1000 250" role="img" aria-label="El plan compara la configuración con el estado, que se refresca leyendo la infraestructura real">
+        <rect x="20" y="40" width="250" height="100" rx="14" class="d-file"/>
+        <text x="145" y="72" text-anchor="middle" class="d-title">Configuración (.tf)</text>
+        <text x="145" y="96" text-anchor="middle" class="d-sub">lo que querés</text>
+        <text x="145" y="120" text-anchor="middle" class="d-lbl">2 contenedores</text>
+
+        <rect x="375" y="40" width="250" height="100" rx="14" class="d-vol"/>
+        <text x="500" y="72" text-anchor="middle" class="d-title">Estado (.tfstate)</text>
+        <text x="500" y="96" text-anchor="middle" class="d-sub">lo que Terraform creó</text>
+        <text x="500" y="120" text-anchor="middle" class="d-lbl">1 contenedor + sus IDs</text>
+
+        <rect x="730" y="40" width="250" height="100" rx="14" class="d-cont"/>
+        <text x="855" y="72" text-anchor="middle" class="d-title">Infra real</text>
+        <text x="855" y="96" text-anchor="middle" class="d-sub">lo que hay de verdad</text>
+        <text x="855" y="120" text-anchor="middle" class="d-lbl">1 contenedor</text>
+
+        <path d="M726,90 L629,90" class="d-line s-cont" marker-end="url(#ah-cont)"/>
+        <text x="677" y="80" text-anchor="middle" class="d-lbl">refresh</text>
+        <path d="M371,90 L274,90" class="d-line s-vol" marker-start="url(#ah-vol)" marker-end="url(#ah-vol)"/>
+        <text x="322" y="80" text-anchor="middle" class="d-lbl">compara</text>
+
+        <path d="M322,96 C322,170 430,180 430,196" class="d-line s-comp" marker-end="url(#ah-comp)"/>
+        <rect x="300" y="200" width="400" height="44" rx="12" class="d-comp"/>
+        <text x="500" y="227" text-anchor="middle" class="d-code" style="font-weight:700">Plan: 1 to add, 0 to change, 0 to destroy</text>
+      </svg>
+      </div>
+      <div class="grid cols-3" style="margin-top:12px">
+        <div class="callout info"><span class="ico">i</span><p><b>refresh</b>: antes de planear, Terraform lee la infra real y actualiza lo que sabe de cada recurso.</p></div>
+        <div class="callout warn"><span class="ico">!</span><p><b>Drift</b>: alguien cambió algo a mano en la consola. El próximo <code>plan</code> lo detecta y propone volverlo a lo que dice el código.</p></div>
+        <div class="callout bad"><span class="ico">✕</span><p>Si perdés el <code>.tfstate</code>, Terraform cree que no existe nada e intenta crear todo de nuevo. Por eso en equipo va en un <b>backend remoto</b>.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= PLAN ================= -->
+  <section class="block" id="plan">
+    <div class="section-head">
+      <div class="num" style="--tone:var(--ok)">4</div>
+      <div class="titles"><h2>Cómo leer un plan</h2><p>El símbolo de la izquierda dice qué va a pasar con cada recurso.</p></div>
+    </div>
+    <div class="grid cols-2">
+      <div class="card t-ok">
+        <h3>Símbolos</h3>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Símbolo</th><th>Significa</th><th>Cuándo</th></tr></thead>
+            <tbody>
+              <tr><td><code style="color:var(--ok)">+</code></td><td>Crear</td><td>Recurso nuevo en el código</td></tr>
+              <tr><td><code style="color:var(--warn)">~</code></td><td>Modificar en el lugar</td><td>Cambió un atributo editable</td></tr>
+              <tr><td><code style="color:var(--bad)">-</code></td><td>Destruir</td><td>Lo sacaste del código</td></tr>
+              <tr><td><code style="color:var(--bad)">-/+</code></td><td>Reemplazar (borra y crea)</td><td>Cambió un atributo que no se puede editar</td></tr>
+              <tr><td><code style="color:var(--bad)">+/-</code></td><td>Reemplazar (crea y después borra)</td><td>Con <code>create_before_destroy</code></td></tr>
+              <tr><td><code style="color:var(--c-net)">&lt;=</code></td><td>Leer</td><td>Un <code>data</code> que se resuelve al aplicar</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <div class="callout warn"><span class="ico">!</span><p>Ojo con <code>-/+</code> y <code># forces replacement</code>: en una base de datos significa <b>perder los datos</b>.</p></div>
+      </div>
+      <div class="card t-ok">
+        <h3>Ejemplo de salida</h3>
+        <pre class="big"><code data-lang="plain">Terraform will perform the following actions:
+
+  # docker_container.chanchito will be created
+  + resource "docker_container" "chanchito" {
+      + name    = "chanchito"
+      + image   = "sha256:4f2a…"
+      + id      = (known after apply)
+    }
+
+  # docker_container.monguito must be replaced
+-/+ resource "docker_container" "monguito" {
+      ~ image   = "mongo:6" -> "mongo:7" # forces replacement
+    }
+
+Plan: 2 to add, 0 to change, 1 to destroy.</code></pre>
+        <div class="callout info"><span class="ico">i</span><p><code>(known after apply)</code>: el valor lo decide la plataforma al crear el recurso (IDs, IPs).</p></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= GLOSARIO ================= -->
+  <section class="block" id="glosario">
+    <div class="section-head">
+      <div class="num" style="--tone:var(--c-cont)">5</div>
+      <div class="titles"><h2>Glosario</h2><p>Las piezas que vas a ver en cualquier proyecto.</p></div>
+    </div>
+    <div class="grid" style="grid-template-columns:repeat(auto-fit,minmax(min(100%,340px),1fr))">
+      <div class="card t-img">
+        <span class="tag">Bloque</span>
+        <h3>provider</h3>
+        <p>Plugin que traduce tus recursos a llamadas a una API (AWS, Azure, Docker…). Se configura con región, credenciales, host.</p>
+      </div>
+      <div class="card t-cont">
+        <span class="tag">Bloque</span>
+        <h3>resource</h3>
+        <p>Algo que Terraform <b>crea y administra</b>: una VM, un bucket, un contenedor. Es el bloque central.</p>
+        <ul><li><code>resource "tipo" "nombre" { … }</code></li></ul>
+      </div>
+      <div class="card t-net">
+        <span class="tag">Bloque</span>
+        <h3>data</h3>
+        <p><b>Lee</b> algo que ya existe y no administra Terraform (la última imagen de Ubuntu, una VPC creada por otro equipo).</p>
+      </div>
+      <div class="card t-file">
+        <span class="tag">Bloque</span>
+        <h3>variable</h3>
+        <p>Parámetro de entrada (región, tamaño, nombre del entorno). Se usa como <code>var.nombre</code>.</p>
+      </div>
+      <div class="card t-file">
+        <span class="tag">Bloque</span>
+        <h3>output</h3>
+        <p>Valor que Terraform muestra al terminar o que exporta un módulo (una IP, una URL).</p>
+      </div>
+      <div class="card t-file">
+        <span class="tag">Bloque</span>
+        <h3>locals</h3>
+        <p>Valores calculados internos para no repetir expresiones. Se usan como <code>local.nombre</code>.</p>
+      </div>
+      <div class="card t-comp">
+        <span class="tag">Organización</span>
+        <h3>module</h3>
+        <p>Carpeta de <code>.tf</code> reutilizable con entradas (variables) y salidas (outputs). Toda carpeta es un módulo: la que ejecutás es el <b>root module</b>.</p>
+      </div>
+      <div class="card t-vol">
+        <span class="tag">Estado</span>
+        <h3>state</h3>
+        <p>Archivo JSON (<code>terraform.tfstate</code>) que relaciona cada recurso del código con su ID real. Puede tener <b>secretos</b>.</p>
+      </div>
+      <div class="card t-vol">
+        <span class="tag">Estado</span>
+        <h3>backend</h3>
+        <p>Dónde se guarda el estado: local (default), S3, Azure Storage, GCS o HCP Terraform. Los remotos permiten bloqueo y trabajo en equipo.</p>
+      </div>
+      <div class="card t-comp">
+        <span class="tag">Estado</span>
+        <h3>workspace</h3>
+        <p>Varios estados para la misma configuración (<code>dev</code>, <code>prod</code>). Útil para pruebas; para entornos reales suelen preferirse carpetas separadas.</p>
+      </div>
+      <div class="card t-img">
+        <span class="tag">Archivo</span>
+        <h3>.terraform.lock.hcl</h3>
+        <p>Fija las versiones exactas de los providers (como <code>package-lock.json</code>). <b>Se sube a git.</b></p>
+      </div>
+      <div class="card t-img">
+        <span class="tag">Carpeta</span>
+        <h3>.terraform/</h3>
+        <p>Providers y módulos descargados por <code>init</code> (como <code>node_modules</code>). <b>No</b> se sube a git.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= ECOSISTEMA ================= -->
+  <section class="block" id="ecosistema">
+    <div class="section-head">
+      <div class="num" style="--tone:var(--c-net)">6</div>
+      <div class="titles"><h2>Terraform, Docker y Kubernetes: quién hace qué</h2><p>No compiten: trabajan en capas distintas.</p></div>
+    </div>
+    <div class="grid cols-2">
+      <div class="card t-net">
+        <h3>Capas</h3>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Herramienta</th><th>Se ocupa de</th><th>Ejemplo</th></tr></thead>
+            <tbody>
+              <tr><td>Docker</td><td>Empaquetar y correr <b>una app</b></td><td>Imagen <code>chanchito:1</code></td></tr>
+              <tr><td>Docker Compose</td><td>Varias apps en <b>una máquina</b></td><td>chanchito + monguito en tu PC</td></tr>
+              <tr><td>Kubernetes</td><td>Apps repartidas en un <b>cluster</b></td><td>3 réplicas con rolling update</td></tr>
+              <tr><td><b>Terraform</b></td><td>Crear la <b>infraestructura</b> donde todo eso corre</td><td>El cluster, la red, la base gestionada, el DNS</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <div class="callout tip"><span class="ico">✓</span><p>Flujo típico: Terraform crea el cluster (EKS/AKS/GKE) → Kubernetes corre tus contenedores Docker adentro.</p></div>
+      </div>
+      <div class="card t-comp">
+        <h3>Terraform vs OpenTofu</h3>
+        <p>En 2023 Terraform pasó a licencia BUSL. La comunidad creó <b>OpenTofu</b>, un fork libre (Linux Foundation) compatible con la misma sintaxis.</p>
+        <ul>
+          <li>Los comandos son iguales: <code>tofu init</code>, <code>tofu plan</code>, <code>tofu apply</code>…</li>
+          <li>Todo lo de estas hojas funciona en los dos, salvo funciones muy nuevas de cada uno.</li>
+          <li>Instalar en Windows: <code>winget install Hashicorp.Terraform</code> o <code>winget install OpenTofu.Tofu</code>.</li>
+        </ul>
+        <div class="callout info"><span class="ico">i</span><p>Alternativas con otro enfoque: <b>Pulumi</b> (infra con TypeScript/Python), <b>CloudFormation</b> (solo AWS), <b>Bicep</b> (solo Azure).</p></div>
+      </div>
+    </div>
+  </section>
+
+  <footer class="foot">
+    <a href="index.html">← Inicio</a>
+    <a href="02-cli.html">Siguiente: CLI →</a>
+  </footer>
+</main>
+</body>
+</html>

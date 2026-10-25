@@ -1,0 +1,354 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="description" content="Errores comunes de Terraform con causa y solución: providers, backend, lock del estado, for_each, ciclos, credenciales, drift y recursos existentes.">
+<meta name="theme-color" content="#7b42bc">
+<title>Terraform · Problemas comunes</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect x='4' y='4' width='56' height='56' rx='14' fill='%237b42bc'/%3E%3Cg fill='%23fff'%3E%3Cpath d='M14 13l10 5.8v11.6l-10-5.8z'/%3E%3Cpath d='M26 20.4l10 5.8v11.6l-10-5.8z'/%3E%3Cpath d='M26 34.2l10 5.8v11.6l-10-5.8z'/%3E%3Cpath d='M38 26.2l10-5.8v11.6l-10 5.8z' opacity='.7'/%3E%3C/g%3E%3C/svg%3E">
+<link rel="stylesheet" href="assets/style.css">
+<script src="assets/app.js"></script>
+<style>
+  .fix dt { font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: .05em; color: var(--muted); margin-top: 10px; }
+  .fix dd { margin: 3px 0 0; font-size: 14px; }
+  .fix dd pre { margin-top: 6px; }
+  .err pre { background: color-mix(in srgb, var(--bad) 12%, var(--surface)); color: var(--bad); border-color: color-mix(in srgb, var(--bad) 35%, transparent); }
+  .err pre .copy { display: none; }
+</style>
+</head>
+<body data-page="problemas">
+<header class="topbar"></header>
+
+<svg width="0" height="0" style="position:absolute" aria-hidden="true" focusable="false">
+  <defs>
+    <marker id="ah" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="d-head"/></marker>
+  </defs>
+</svg>
+
+<main class="wrap">
+
+  <div class="hero">
+    <span class="eyebrow">Terraform · Cheatsheet 07</span>
+    <h1>Problemas comunes</h1>
+    <p class="lead">Buscá por el texto del error. Cada tarjeta: <b>qué ves</b> → <b>por qué pasa</b> → <b>cómo se arregla</b>. Para más detalle: <code>$env:TF_LOG = "DEBUG"</code>.</p>
+    <div class="toolbar">
+      <label class="search">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
+        <input id="q" type="search" placeholder="state lock, provider, for_each, already exists, credenciales…" autocomplete="off" aria-label="Buscar problema">
+        <span class="hint"><kbd>/</kbd></span>
+      </label>
+    </div>
+    <nav class="toc">
+      <a href="#etapas">Dónde se rompe</a>
+      <a href="#init">init</a>
+      <a href="#plan">validate y plan</a>
+      <a href="#apply">apply</a>
+      <a href="#estado">Estado</a>
+    </nav>
+  </div>
+
+  <!-- ================= ETAPAS ================= -->
+  <section class="block" id="etapas">
+    <div class="section-head">
+      <div class="num" style="--tone:var(--c-comp)">0</div>
+      <div class="titles"><h2>Dónde se rompe cada cosa</h2><p>La etapa en la que falla ya te dice de qué tipo es el problema.</p></div>
+    </div>
+    <div class="diagram">
+      <div class="svg-scroll">
+      <svg viewBox="0 0 1000 240" role="img" aria-label="Etapas init, validate, plan y apply con los errores típicos de cada una">
+        <rect x="20" y="24" width="220" height="56" rx="12" class="d-plain"/>
+        <text x="130" y="58" text-anchor="middle" class="d-code" style="font-weight:700;font-size:15px">init</text>
+        <rect x="273" y="24" width="220" height="56" rx="12" class="d-file"/>
+        <text x="383" y="58" text-anchor="middle" class="d-code" style="font-weight:700;font-size:15px">validate</text>
+        <rect x="526" y="24" width="220" height="56" rx="12" class="d-comp"/>
+        <text x="636" y="58" text-anchor="middle" class="d-code" style="font-weight:700;font-size:15px">plan</text>
+        <rect x="779" y="24" width="201" height="56" rx="12" class="d-img"/>
+        <text x="879" y="58" text-anchor="middle" class="d-code" style="font-weight:700;font-size:15px">apply</text>
+        <path d="M240,52 L269,52" class="d-line" marker-end="url(#ah)"/>
+        <path d="M493,52 L522,52" class="d-line" marker-end="url(#ah)"/>
+        <path d="M746,52 L775,52" class="d-line" marker-end="url(#ah)"/>
+
+        <text x="130" y="114" text-anchor="middle" class="d-sub">versiones de providers</text>
+        <text x="130" y="138" text-anchor="middle" class="d-sub">lock file inconsistente</text>
+        <text x="130" y="162" text-anchor="middle" class="d-sub">backend cambiado</text>
+        <text x="130" y="186" text-anchor="middle" class="d-sub">sin acceso al registry</text>
+
+        <text x="383" y="114" text-anchor="middle" class="d-sub">errores de sintaxis</text>
+        <text x="383" y="138" text-anchor="middle" class="d-sub">referencias inexistentes</text>
+        <text x="383" y="162" text-anchor="middle" class="d-sub">argumentos inválidos</text>
+        <text x="383" y="186" text-anchor="middle" class="d-sub">tipos incorrectos</text>
+
+        <text x="636" y="114" text-anchor="middle" class="d-sub">credenciales</text>
+        <text x="636" y="138" text-anchor="middle" class="d-sub">state lock</text>
+        <text x="636" y="162" text-anchor="middle" class="d-sub">for_each con valores</text>
+        <text x="636" y="186" text-anchor="middle" class="d-sub">desconocidos · ciclos</text>
+
+        <text x="879" y="114" text-anchor="middle" class="d-sub">la API rechaza algo</text>
+        <text x="879" y="138" text-anchor="middle" class="d-sub">recurso ya existe</text>
+        <text x="879" y="162" text-anchor="middle" class="d-sub">permisos / cuotas</text>
+        <text x="879" y="186" text-anchor="middle" class="d-sub">prevent_destroy</text>
+
+        <text x="500" y="226" text-anchor="middle" class="d-lbl">validate no habla con ninguna API · plan lee la infra real · apply la modifica</text>
+      </svg>
+      </div>
+      <div class="callout warn"><span class="ico">!</span><p>Si un <code>apply</code> falla a la mitad, lo que se creó <b>queda en el estado</b>. Arreglá la causa y volvé a correr <code>apply</code>: continúa desde ahí.</p></div>
+    </div>
+  </section>
+
+  <!-- ================= INIT ================= -->
+  <section class="block" id="init" data-search>
+    <div class="section-head">
+      <div class="num" style="--tone:var(--c-file)">1</div>
+      <div class="titles"><h2>init: providers y backend</h2></div>
+    </div>
+    <div class="grid">
+      <div class="card t-bad">
+        <h3>No encuentra el provider</h3>
+        <div class="err"><pre><code data-lang="plain">Error: Failed to query available provider packages
+Could not retrieve the list of available versions for provider hashicorp/docker</code></pre></div>
+        <dl class="fix">
+          <dt>Causa</dt><dd>Falta el <code>required_providers</code> y Terraform asume <code>hashicorp/docker</code>, que no existe. O hay un error en <code>source</code>, o no hay acceso a internet / proxy.</dd>
+          <dt>Solución</dt><dd><pre><code data-lang="hcl">required_providers {
+  docker = { source = "kreuzwerker/docker" }
+}</code></pre></dd>
+        </dl>
+      </div>
+
+      <div class="card t-bad">
+        <h3>El lock file no coincide</h3>
+        <div class="err"><pre><code data-lang="plain">Error: Failed to query available provider packages
+locked provider registry.terraform.io/hashicorp/aws 5.x does not match configured version constraint ~&gt; 6.0</code></pre></div>
+        <dl class="fix">
+          <dt>Causa</dt><dd>Cambiaste la restricción de versión pero <code>.terraform.lock.hcl</code> tiene la versión vieja.</dd>
+          <dt>Solución</dt><dd><pre><code>terraform init -upgrade</code></pre>Y commiteá el lock file actualizado.</dd>
+        </dl>
+      </div>
+
+      <div class="card t-bad">
+        <h3>Backend cambiado</h3>
+        <div class="err"><pre><code data-lang="plain">Error: Backend initialization required, please run "terraform init"
+Reason: Backend configuration block has changed</code></pre></div>
+        <dl class="fix">
+          <dt>Causa</dt><dd>Modificaste el bloque <code>backend</code> (o pasaste de local a remoto).</dd>
+          <dt>Solución</dt><dd><pre><code># copiar el estado al nuevo backend
+terraform init -migrate-state
+# o empezar con el nuevo sin migrar
+terraform init -reconfigure</code></pre></dd>
+        </dl>
+      </div>
+
+      <div class="card t-warn">
+        <h3>Lock file sin hashes de otra plataforma</h3>
+        <div class="err"><pre><code data-lang="plain">Error: Inconsistent dependency lock file
+the cached package for registry.terraform.io/... does not match any of the checksums recorded</code></pre></div>
+        <dl class="fix">
+          <dt>Causa</dt><dd>El lock se generó en Windows y el CI corre en Linux (o al revés).</dd>
+          <dt>Solución</dt><dd><pre><code>terraform providers lock -platform=windows_amd64 -platform=linux_amd64</code></pre></dd>
+        </dl>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= PLAN ================= -->
+  <section class="block" id="plan" data-search>
+    <div class="section-head">
+      <div class="num" style="--tone:var(--c-comp)">2</div>
+      <div class="titles"><h2>validate y plan</h2></div>
+    </div>
+    <div class="grid">
+      <div class="card t-bad">
+        <h3>Referencia o argumento inexistente</h3>
+        <div class="err"><pre><code data-lang="plain">Error: Reference to undeclared resource
+A managed resource "docker_image" "app" has not been declared in the root module.
+
+Error: Unsupported argument
+An argument named "imagen" is not expected here.</code></pre></div>
+        <dl class="fix">
+          <dt>Causa</dt><dd>Un nombre mal escrito, un recurso que se borró, o un argumento que no existe en <b>esa versión</b> del provider.</dd>
+          <dt>Solución</dt><dd>Revisá la documentación del recurso en el Registry para tu versión. <code>terraform validate</code> marca la línea exacta.</dd>
+        </dl>
+      </div>
+
+      <div class="card t-bad">
+        <h3>for_each con valores desconocidos</h3>
+        <div class="err"><pre><code data-lang="plain">Error: Invalid for_each argument
+The "for_each" set includes values derived from resource attributes that cannot be determined until apply</code></pre></div>
+        <dl class="fix">
+          <dt>Causa</dt><dd>Las <b>claves</b> del <code>for_each</code> dependen de algo que se crea en el mismo apply (un ID, una IP).</dd>
+          <dt>Solución</dt><dd>Usá claves conocidas de antemano (nombres de variables, strings fijos) y dejá los valores desconocidos dentro de <code>each.value</code>.</dd>
+        </dl>
+      </div>
+
+      <div class="card t-bad">
+        <h3>for_each con una lista</h3>
+        <div class="err"><pre><code data-lang="plain">Error: Invalid for_each argument
+The given "for_each" argument value is unsuitable: the "for_each" argument must be a map, or set of strings, and you have provided a value of type tuple.</code></pre></div>
+        <dl class="fix">
+          <dt>Solución</dt><dd><pre><code data-lang="hcl">for_each = toset(var.nombres)</code></pre></dd>
+        </dl>
+      </div>
+
+      <div class="card t-bad">
+        <h3>Ciclo de dependencias</h3>
+        <div class="err"><pre><code data-lang="plain">Error: Cycle: docker_container.a, docker_container.b</code></pre></div>
+        <dl class="fix">
+          <dt>Causa</dt><dd>A referencia a B y B referencia a A (directo o a través de otros recursos).</dd>
+          <dt>Solución</dt><dd>Cortá una de las referencias: sacá el valor a una variable o un local, o separá el recurso en dos.</dd>
+        </dl>
+      </div>
+
+      <div class="card t-warn">
+        <h3>Falta una variable obligatoria</h3>
+        <div class="err"><pre><code data-lang="plain">Error: No value for required variable
+The root module input variable "mongo_password" is not set</code></pre></div>
+        <dl class="fix">
+          <dt>Solución</dt><dd><pre><code>$env:TF_VAR_mongo_password = "&lt;password&gt;"</code></pre>O un valor en <code>terraform.tfvars</code> (si no es secreto).</dd>
+        </dl>
+      </div>
+
+      <div class="card t-bad">
+        <h3>Credenciales del provider</h3>
+        <div class="err"><pre><code data-lang="plain">Error: No valid credential sources found
+Error: Cannot connect to the Docker daemon at unix:///var/run/docker.sock</code></pre></div>
+        <dl class="fix">
+          <dt>Causa</dt><dd>AWS: no hay perfil ni variables de entorno. Docker en Windows: Docker Desktop cerrado o el provider apunta al socket de Linux.</dd>
+          <dt>Solución</dt><dd><pre><code># AWS
+aws configure
+$env:AWS_PROFILE = "&lt;perfil&gt;"</code></pre>Docker: abrí Docker Desktop y usá <code>host = "npipe:////.//pipe//docker_engine"</code>.</dd>
+        </dl>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= APPLY ================= -->
+  <section class="block" id="apply" data-search>
+    <div class="section-head">
+      <div class="num" style="--tone:var(--c-img)">3</div>
+      <div class="titles"><h2>apply</h2></div>
+    </div>
+    <div class="grid">
+      <div class="card t-bad">
+        <h3>El recurso ya existe</h3>
+        <div class="err"><pre><code data-lang="plain">Error: Unable to create container: Conflict. The container name "/chanchito" is already in use
+Error: creating S3 Bucket: BucketAlreadyExists</code></pre></div>
+        <dl class="fix">
+          <dt>Causa</dt><dd>Existe algo con ese nombre que Terraform no administra (creado a mano, por compose o por otro estado).</dd>
+          <dt>Solución</dt><dd>Si es tuyo y lo querés administrar: <b>importalo</b>. Si sobra: borralo (<code>docker compose down</code>). Los buckets S3 tienen nombre <b>global</b>: elegí otro.<pre><code data-lang="hcl">import {
+  to = docker_container.chanchito
+  id = "&lt;id-del-contenedor&gt;"
+}</code></pre></dd>
+        </dl>
+      </div>
+
+      <div class="card t-warn">
+        <h3>prevent_destroy frena el plan</h3>
+        <div class="err"><pre><code data-lang="plain">Error: Instance cannot be destroyed
+Resource docker_volume.mongo_data has lifecycle.prevent_destroy set</code></pre></div>
+        <dl class="fix">
+          <dt>Causa</dt><dd>Está funcionando como debe: el plan quería destruir (o reemplazar) un recurso protegido.</dd>
+          <dt>Solución</dt><dd>Revisá por qué quiere destruirlo (¿un cambio que fuerza reemplazo?). Solo si de verdad querés borrarlo, sacá el flag a conciencia.</dd>
+        </dl>
+      </div>
+
+      <div class="card t-warn">
+        <h3>Permisos o cuotas</h3>
+        <div class="err"><pre><code data-lang="plain">Error: AccessDenied: User ... is not authorized to perform: ec2:RunInstances
+Error: ... quota exceeded</code></pre></div>
+        <dl class="fix">
+          <dt>Causa</dt><dd>El usuario o rol con el que corre Terraform no tiene el permiso, o la cuenta llegó a su límite.</dd>
+          <dt>Solución</dt><dd>Agregá el permiso a la política del rol (el mensaje dice cuál) o pedí aumento de cuota. Después, <code>apply</code> otra vez.</dd>
+        </dl>
+      </div>
+
+      <div class="card t-warn">
+        <h3>El plan guardado venció</h3>
+        <div class="err"><pre><code data-lang="plain">Error: Saved plan is stale</code></pre></div>
+        <dl class="fix">
+          <dt>Causa</dt><dd>Alguien aplicó otro cambio entre tu <code>plan -out</code> y tu <code>apply</code>.</dd>
+          <dt>Solución</dt><dd><pre><code>terraform plan -out=tfplan
+terraform apply tfplan</code></pre></dd>
+        </dl>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= ESTADO ================= -->
+  <section class="block" id="estado" data-search>
+    <div class="section-head">
+      <div class="num" style="--tone:var(--c-vol)">4</div>
+      <div class="titles"><h2>Estado y drift</h2></div>
+    </div>
+    <div class="grid">
+      <div class="card t-bad">
+        <h3>Error acquiring the state lock</h3>
+        <div class="err"><pre><code data-lang="plain">Error: Error acquiring the state lock
+Lock Info:
+  ID:        6f1c2a…
+  Who:       compañero@PC
+  Operation: OperationTypeApply</code></pre></div>
+        <dl class="fix">
+          <dt>Causa</dt><dd>Otro plan/apply está corriendo, o uno anterior se cortó (Ctrl+C, se cayó la conexión) y dejó el lock tomado.</dd>
+          <dt>Solución</dt><dd>Esperá. Si estás <b>seguro</b> de que nadie está aplicando:<pre><code>terraform force-unlock &lt;ID&gt;</code></pre></dd>
+        </dl>
+      </div>
+
+      <div class="card t-warn">
+        <h3>Alguien cambió algo a mano (drift)</h3>
+        <dl class="fix">
+          <dt>Qué ves</dt><dd>Un <code>plan</code> sin cambios en el código propone modificar o recrear recursos.</dd>
+          <dt>Solución</dt><dd>Elegí quién tiene razón:<pre><code># el código manda: volver a lo declarado
+terraform apply
+# el cambio manual se queda: aceptarlo en el estado
+terraform apply -refresh-only</code></pre>…y después actualizá el código para que coincida.</dd>
+        </dl>
+      </div>
+
+      <div class="card t-warn">
+        <h3>El plan siempre muestra cambios</h3>
+        <dl class="fix">
+          <dt>Causa</dt><dd>La plataforma normaliza un valor (mayúsculas, orden de una lista, JSON reformateado) o otra herramienta lo modifica después.</dd>
+          <dt>Solución</dt><dd>Escribí el valor tal como lo devuelve la API, o ignorá ese atributo:<pre><code data-lang="hcl">lifecycle {
+  ignore_changes = [tags["ultima_modificacion"]]
+}</code></pre></dd>
+        </dl>
+      </div>
+
+      <div class="card t-bad">
+        <h3>Renombré y quiere destruir</h3>
+        <dl class="fix">
+          <dt>Causa</dt><dd>Para Terraform, cambiar el nombre local es borrar un recurso y crear otro.</dd>
+          <dt>Solución</dt><dd><pre><code data-lang="hcl">moved {
+  from = docker_container.app
+  to   = docker_container.chanchito
+}</code></pre></dd>
+        </dl>
+      </div>
+
+      <div class="card t-bad">
+        <h3>Subí el estado a git</h3>
+        <dl class="fix">
+          <dt>Causa</dt><dd><code>terraform.tfstate</code> no estaba en el <code>.gitignore</code>.</dd>
+          <dt>Solución</dt><dd>Sacalo del repo y agregalo al <code>.gitignore</code>. Si el repo es público o compartido, <b>rotá los secretos</b> que tenía: siguen en el historial.<pre><code>git rm --cached terraform.tfstate</code></pre></dd>
+        </dl>
+      </div>
+
+      <div class="card t-bad">
+        <h3>Perdí el estado</h3>
+        <dl class="fix">
+          <dt>Qué ves</dt><dd>El plan quiere crear todo de nuevo, pero los recursos existen.</dd>
+          <dt>Solución</dt><dd>Recuperá una versión anterior: <code>terraform.tfstate.backup</code> (local) o el versionado del bucket (S3/Azure/GCS). Si no hay copia, volvé a <b>importar</b> cada recurso con bloques <code>import</code>.</dd>
+        </dl>
+      </div>
+    </div>
+  </section>
+
+  <p class="empty">No encontré ese problema. Probá con otra palabra del error.</p>
+
+  <footer class="foot">
+    <a href="06-practica-docker.html">← Práctica con Docker</a>
+    <a href="index.html">Volver al inicio</a>
+  </footer>
+</main>
+</body>
+</html>

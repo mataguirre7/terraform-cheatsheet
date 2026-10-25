@@ -1,0 +1,197 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="description" content="Cheatsheets visuales de Terraform en español: conceptos, CLI, lenguaje HCL, variables y estado, módulos, práctica con Docker y solución de problemas.">
+<meta name="theme-color" content="#7b42bc">
+<title>Terraform Cheatsheets</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect x='4' y='4' width='56' height='56' rx='14' fill='%237b42bc'/%3E%3Cg fill='%23fff'%3E%3Cpath d='M14 13l10 5.8v11.6l-10-5.8z'/%3E%3Cpath d='M26 20.4l10 5.8v11.6l-10-5.8z'/%3E%3Cpath d='M26 34.2l10 5.8v11.6l-10-5.8z'/%3E%3Cpath d='M38 26.2l10-5.8v11.6l-10 5.8z' opacity='.7'/%3E%3C/g%3E%3C/svg%3E">
+<link rel="stylesheet" href="assets/style.css">
+<script src="assets/app.js"></script>
+</head>
+<body data-page="inicio">
+<header class="topbar"></header>
+
+<main class="wrap">
+
+  <div class="hero">
+    <span class="eyebrow">Referencia personal</span>
+    <h1>Terraform Cheatsheets</h1>
+    <p class="lead">Infraestructura como código: conceptos, CLI, lenguaje HCL, estado y módulos, con diagramas y comandos para copiar. Si querés practicar sin cuenta de cloud, andá directo a <a href="06-practica-docker.html">Práctica con Docker</a>.</p>
+    <div class="toolbar">
+      <label class="search">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
+        <input id="q" type="search" placeholder="Quiero… ver el plan, importar, desbloquear el estado…" autocomplete="off" aria-label="Buscar qué querés hacer">
+        <span class="hint"><kbd>/</kbd></span>
+      </label>
+    </div>
+  </div>
+
+  <!-- ================= HOJAS ================= -->
+  <section class="block">
+    <div class="grid cols-3">
+      <a class="card sheet-card t-comp" href="01-conceptos.html">
+        <div class="top">
+          <div class="badge"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2 2 7l10 5 10-5-10-5z"/><path d="m2 17 10 5 10-5"/><path d="m2 12 10 5 10-5"/></svg></div>
+          <div><span class="tag">01</span><h3>Conceptos</h3></div>
+        </div>
+        <p>Flujo init → plan → apply, providers, estado deseado vs real, cómo leer un plan y glosario.</p>
+        <div class="chips"><span>provider</span><span>resource</span><span>state</span><span>+ ~ -</span></div>
+      </a>
+      <a class="card sheet-card t-cont" href="02-cli.html">
+        <div class="top">
+          <div class="badge"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m4 17 6-6-6-6"/><path d="M12 19h8"/></svg></div>
+          <div><span class="tag">02</span><h3>CLI</h3></div>
+        </div>
+        <p>init, plan, apply, destroy, outputs, state, import, workspaces y variables de entorno. Con buscador.</p>
+        <div class="chips"><span>plan -out</span><span>-replace</span><span>state list</span><span>TF_VAR_</span></div>
+      </a>
+      <a class="card sheet-card t-file" href="03-lenguaje-hcl.html">
+        <div class="top">
+          <div class="badge"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m16 18 6-6-6-6"/><path d="m8 6-6 6 6 6"/></svg></div>
+          <div><span class="tag">03</span><h3>Lenguaje HCL</h3></div>
+        </div>
+        <p>Bloques, tipos, referencias, expresiones, count vs for_each, dynamic, lifecycle, moved y funciones.</p>
+        <div class="chips"><span>for_each</span><span>lifecycle</span><span>moved</span><span>for</span></div>
+      </a>
+      <a class="card sheet-card t-vol" href="04-variables-estado.html">
+        <div class="top">
+          <div class="badge"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><ellipse cx="12" cy="5" rx="8" ry="3"/><path d="M4 5v14c0 1.7 3.6 3 8 3s8-1.3 8-3V5"/><path d="M4 12c0 1.7 3.6 3 8 3s8-1.3 8-3"/></svg></div>
+          <div><span class="tag">04</span><h3>Variables y estado</h3></div>
+        </div>
+        <p>Variables, precedencia, outputs y locals, el archivo de estado, bloqueo, backends y secretos.</p>
+        <div class="chips"><span>tfvars</span><span>backend s3</span><span>lock</span><span>.gitignore</span></div>
+      </a>
+      <a class="card sheet-card t-img" href="05-modulos-proyecto.html">
+        <div class="top">
+          <div class="badge"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg></div>
+          <div><span class="tag">05</span><h3>Módulos y proyecto</h3></div>
+        </div>
+        <p>Crear y llamar módulos, fuentes, versiones de providers y estructura con un entorno por carpeta.</p>
+        <div class="chips"><span>module</span><span>~&gt; 3.0</span><span>envs/dev</span></div>
+      </a>
+      <a class="card sheet-card t-net" href="06-practica-docker.html">
+        <div class="top">
+          <div class="badge"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 16V8a2 2 0 0 0-1-1.7l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.7l7 4a2 2 0 0 0 2 0l7-4a2 2 0 0 0 1-1.7z"/><path d="M3.3 7 12 12l8.7-5"/><path d="M12 22V12"/></svg></div>
+          <div><span class="tag">06</span><h3>Práctica con Docker</h3></div>
+        </div>
+        <p>Una app Node + MongoDB levantada con Terraform en tu PC, sin cuenta de cloud. Archivos completos y experimentos.</p>
+        <div class="chips"><span>kreuzwerker/docker</span><span>chanchito</span><span>monguito</span></div>
+      </a>
+      <a class="card sheet-card t-bad" href="07-problemas.html">
+        <div class="top">
+          <div class="badge"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0z"/><path d="M12 9v4M12 17h.01"/></svg></div>
+          <div><span class="tag">07</span><h3>Problemas comunes</h3></div>
+        </div>
+        <p>State lock, providers, for_each, ciclos, credenciales, recursos que ya existen y drift.</p>
+        <div class="chips"><span>force-unlock</span><span>init -upgrade</span><span>import</span></div>
+      </a>
+      <div class="card t-ok">
+        <span class="tag">Atajos</span>
+        <h3>Cómo usar estas hojas</h3>
+        <ul>
+          <li><kbd>/</kbd> enfoca el buscador · <kbd>Esc</kbd> lo limpia</li>
+          <li>Pasá el mouse por un bloque de código → botón <b>copiar</b></li>
+          <li><span style="color:#ff8fc8;font-family:var(--mono)">&lt;rosa&gt;</span> = valor a reemplazar</li>
+          <li>Botón ☀/☾ arriba a la derecha: tema claro/oscuro</li>
+          <li>Todo funciona igual con OpenTofu (<code>tofu</code>)</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= QUIERO ================= -->
+  <section class="block" id="quiero" data-search>
+    <div class="section-head">
+      <div class="num" style="--tone:var(--c-comp)">?</div>
+      <div class="titles"><h2>Quiero…</h2><p>Lo que querés hacer → el comando.</p></div>
+    </div>
+    <div class="grid cols-2">
+      <div class="card t-img">
+        <h3>Trabajo diario</h3>
+        <div class="want">
+          <div class="want-row"><div class="q">Empezar un proyecto<small>init, providers, descargar</small></div><pre><code>terraform init</code></pre></div>
+          <div class="want-row"><div class="q">Ordenar y revisar el código<small>fmt, validate, formato</small></div><pre><code>terraform fmt -recursive
+terraform validate</code></pre></div>
+          <div class="want-row"><div class="q">Ver qué va a cambiar<small>plan, preview, diff</small></div><pre><code>terraform plan</code></pre></div>
+          <div class="want-row"><div class="q">Guardar el plan y aplicarlo<small>plan -out, apply plan</small></div><pre><code>terraform plan -out=tfplan
+terraform apply tfplan</code></pre></div>
+          <div class="want-row"><div class="q">Pasar valores de variables<small>-var, tfvars, entorno</small></div><pre><code>terraform plan -var-file="prod.tfvars"</code></pre></div>
+          <div class="want-row"><div class="q">Recrear un recurso<small>replace, taint, forzar</small></div><pre><code>terraform apply -replace="&lt;tipo&gt;.&lt;nombre&gt;"</code></pre></div>
+          <div class="want-row"><div class="q">Borrar todo<small>destroy, eliminar, bajar</small></div><pre><code>terraform destroy</code></pre></div>
+          <div class="want-row"><div class="q">Ver los outputs<small>output, valores, url</small></div><pre><code>terraform output</code></pre></div>
+        </div>
+      </div>
+
+      <div class="card t-vol">
+        <h3>Estado y mantenimiento</h3>
+        <div class="want">
+          <div class="want-row"><div class="q">Listar lo que administra<small>state list, recursos</small></div><pre><code>terraform state list</code></pre></div>
+          <div class="want-row"><div class="q">Ver un recurso en detalle<small>state show, atributos</small></div><pre><code>terraform state show &lt;tipo&gt;.&lt;nombre&gt;</code></pre></div>
+          <div class="want-row"><div class="q">Traer algo que ya existe<small>import, adoptar</small></div><pre><code>terraform plan -generate-config-out=generado.tf</code></pre></div>
+          <div class="want-row"><div class="q">Liberar un lock trabado<small>force-unlock, state lock</small></div><pre><code>terraform force-unlock &lt;ID&gt;</code></pre></div>
+          <div class="want-row"><div class="q">Aceptar cambios manuales<small>refresh-only, drift</small></div><pre><code>terraform apply -refresh-only</code></pre></div>
+          <div class="want-row"><div class="q">Actualizar providers<small>upgrade, versiones, lock</small></div><pre><code>terraform init -upgrade</code></pre></div>
+          <div class="want-row"><div class="q">Mover el estado a otro backend<small>migrate-state, s3, remoto</small></div><pre><code>terraform init -migrate-state</code></pre></div>
+          <div class="want-row"><div class="q">Hacer backup del estado<small>state pull, copia</small></div><pre><code>terraform state pull &gt; backup.tfstate</code></pre></div>
+        </div>
+      </div>
+
+      <div class="card t-file">
+        <h3>Explorar y depurar</h3>
+        <div class="want">
+          <div class="want-row"><div class="q">Probar una expresión<small>console, funciones</small></div><pre><code>terraform console</code></pre></div>
+          <div class="want-row"><div class="q">Ver logs internos<small>TF_LOG, debug</small></div><pre><code>$env:TF_LOG = "DEBUG"</code></pre></div>
+          <div class="want-row"><div class="q">Ver qué providers uso<small>providers, versiones</small></div><pre><code>terraform providers</code></pre></div>
+          <div class="want-row"><div class="q">Trabajar en otra carpeta<small>chdir, entornos</small></div><pre><code>terraform -chdir=envs/dev plan</code></pre></div>
+        </div>
+      </div>
+
+      <div class="card t-comp">
+        <h3>Workspaces y secretos</h3>
+        <div class="want">
+          <div class="want-row"><div class="q">Crear o cambiar de workspace<small>workspace, entorno</small></div><pre><code>terraform workspace select -or-create dev</code></pre></div>
+          <div class="want-row"><div class="q">Ver el workspace actual<small>workspace show</small></div><pre><code>terraform workspace show</code></pre></div>
+          <div class="want-row"><div class="q">Pasar una contraseña<small>TF_VAR, secreto, sensitive</small></div><pre><code>$env:TF_VAR_&lt;nombre&gt; = "&lt;valor&gt;"</code></pre></div>
+          <div class="want-row"><div class="q">Instalar Terraform<small>winget, instalar</small></div><pre><code>winget install Hashicorp.Terraform</code></pre></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= DESCARGAS ================= -->
+  <section class="block" id="descargas">
+    <div class="section-head">
+      <div class="num" style="--tone:var(--ok)">↓</div>
+      <div class="titles"><h2>Descargar como imagen</h2><p>Cada hoja completa en PNG, para tenerla offline o imprimirla.</p></div>
+    </div>
+    <div class="card t-ok wide">
+      <h3>PNG por hoja</h3>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Hoja</th><th>Tema oscuro</th><th>Tema claro</th></tr></thead>
+          <tbody>
+            <tr><td>Inicio</td><td><a href="img/index-dark.png" download>index-dark.png</a></td><td><a href="img/index-light.png" download>index-light.png</a></td></tr>
+            <tr><td>01 · Conceptos</td><td><a href="img/01-conceptos-dark.png" download>01-conceptos-dark.png</a></td><td><a href="img/01-conceptos-light.png" download>01-conceptos-light.png</a></td></tr>
+            <tr><td>02 · CLI</td><td><a href="img/02-cli-dark.png" download>02-cli-dark.png</a></td><td><a href="img/02-cli-light.png" download>02-cli-light.png</a></td></tr>
+            <tr><td>03 · Lenguaje HCL</td><td><a href="img/03-lenguaje-hcl-dark.png" download>03-lenguaje-hcl-dark.png</a></td><td><a href="img/03-lenguaje-hcl-light.png" download>03-lenguaje-hcl-light.png</a></td></tr>
+            <tr><td>04 · Variables y estado</td><td><a href="img/04-variables-estado-dark.png" download>04-variables-estado-dark.png</a></td><td><a href="img/04-variables-estado-light.png" download>04-variables-estado-light.png</a></td></tr>
+            <tr><td>05 · Módulos y proyecto</td><td><a href="img/05-modulos-proyecto-dark.png" download>05-modulos-proyecto-dark.png</a></td><td><a href="img/05-modulos-proyecto-light.png" download>05-modulos-proyecto-light.png</a></td></tr>
+            <tr><td>06 · Práctica con Docker</td><td><a href="img/06-practica-docker-dark.png" download>06-practica-docker-dark.png</a></td><td><a href="img/06-practica-docker-light.png" download>06-practica-docker-light.png</a></td></tr>
+            <tr><td>07 · Problemas comunes</td><td><a href="img/07-problemas-dark.png" download>07-problemas-dark.png</a></td><td><a href="img/07-problemas-light.png" download>07-problemas-light.png</a></td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </section>
+
+  <p class="empty">Nada por acá. Probá en <a href="02-cli.html">CLI</a> o en <a href="07-problemas.html">Problemas comunes</a>.</p>
+
+  <footer class="foot">
+    <span>Terraform Cheatsheets · sirve igual para OpenTofu</span>
+    <a href="01-conceptos.html">Empezar por Conceptos →</a>
+  </footer>
+</main>
+</body>
+</html>
