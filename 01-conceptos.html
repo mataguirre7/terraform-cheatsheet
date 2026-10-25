@@ -40,6 +40,35 @@
     </nav>
   </div>
 
+  <section class="terms-box">
+    <h2>Términos de esta página</h2>
+    <p>El glosario completo de bloques está más abajo; estos son los términos generales.</p>
+    <dl class="terms">
+      <dt>Infraestructura</dt><dd>Todo lo que una app necesita para funcionar además de su código: servidores, redes, bases de datos, discos, dominios, permisos.</dd>
+      <dt>Nube (cloud)</dt><dd>Infraestructura que alquilás a un proveedor (AWS, Azure, Google Cloud) y creás por internet, en vez de comprar servidores físicos.</dd>
+      <dt>Infraestructura como código (IaC)</dt><dd>Describir esa infraestructura en archivos de texto, en lugar de crearla a mano con clics. Los archivos se versionan con Git y se pueden repetir.</dd>
+      <dt>API</dt><dd>La “puerta” por la que un programa le pide cosas a otro. Terraform crea recursos llamando a la API de cada proveedor.</dd>
+      <dt>Provider</dt><dd>El plugin de Terraform que sabe hablar con una plataforma concreta (AWS, Azure, Docker…).</dd>
+      <dt>Resource (recurso)</dt><dd>Algo que Terraform crea y administra: una máquina virtual, un bucket, un contenedor.</dd>
+      <dt>Declarativo</dt><dd>Describís cómo tiene que quedar todo, no los pasos para llegar. Terraform calcula los pasos.</dd>
+      <dt>Plan</dt><dd>La lista de cambios que Terraform haría para que la realidad coincida con el código. Se revisa antes de aplicar.</dd>
+      <dt>Estado (state)</dt><dd>El archivo donde Terraform anota qué recursos creó y cuáles son sus identificadores reales.</dd>
+      <dt>Drift</dt><dd>Diferencia entre lo que dice el código y lo que hay de verdad, normalmente porque alguien cambió algo a mano.</dd>
+    </dl>
+  </section>
+
+  <section class="block" id="iac">
+    <div class="section-head">
+      <div class="num">0</div>
+      <div class="titles"><h2>Qué problema resuelve Terraform</h2></div>
+    </div>
+    <div class="explain">
+      <p>Para poner una app en internet hace falta crear infraestructura: un servidor, una red, una base de datos, un dominio. Se puede hacer con clics en la consola web del proveedor, pero así nadie recuerda exactamente qué se configuró, repetirlo para un segundo entorno (pruebas, producción) es lento, y un error manual es difícil de rastrear.</p>
+      <p>Con Terraform escribís esa infraestructura en archivos <code>.tf</code>. Terraform los lee, compara con lo que ya existe y crea, modifica o borra lo necesario. Los archivos quedan en Git: se revisan, se versionan y sirven de documentación. Crear un entorno idéntico es volver a aplicar los mismos archivos.</p>
+      <p><b>No necesitás una cuenta de nube para aprender:</b> Terraform también maneja recursos locales, como contenedores de Docker. La hoja <a href="06-practica-docker.html">Práctica con Docker</a> te guía con eso.</p>
+    </div>
+  </section>
+
   <!-- ================= FLUJO ================= -->
   <section class="block" id="flujo">
     <div class="section-head">

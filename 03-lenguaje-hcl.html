@@ -38,6 +38,22 @@
     </nav>
   </div>
 
+  <section class="terms-box">
+    <h2>Términos de esta página</h2>
+    <dl class="terms">
+      <dt>HCL</dt><dd>El lenguaje de los archivos <code>.tf</code>. No es un lenguaje de programación general: sirve para describir configuración.</dd>
+      <dt>Bloque</dt><dd>Una unidad con un tipo, etiquetas entre comillas y un cuerpo entre llaves <code>{ }</code>: <code>resource "tipo" "nombre" { … }</code>.</dd>
+      <dt>Argumento</dt><dd>Un dato dentro de un bloque, con la forma <code>nombre = valor</code>.</dd>
+      <dt>Expresión</dt><dd>Cualquier cosa que produce un valor: un texto, un número, una referencia, una cuenta, una función.</dd>
+      <dt>Referencia</dt><dd>Usar el valor de otro objeto, por ejemplo <code>docker_network.app.name</code>. Además crea una dependencia: Terraform crea primero lo referenciado.</dd>
+      <dt>Interpolación</dt><dd>Meter una expresión dentro de un texto con <code>${…}</code>: <code>"app-${var.entorno}"</code>.</dd>
+      <dt>Tipo</dt><dd>La clase de valor: texto (<code>string</code>), número, verdadero/falso (<code>bool</code>), lista, mapa…</dd>
+      <dt>Lista / mapa</dt><dd>Lista: valores en orden, <code>["a", "b"]</code>. Mapa: pares clave = valor, <code>{ dev = 1, prod = 3 }</code>.</dd>
+      <dt>Meta-argumento</dt><dd>Argumentos especiales que funcionan en cualquier recurso y cambian cómo Terraform lo maneja: <code>count</code>, <code>for_each</code>, <code>depends_on</code>, <code>lifecycle</code>.</dd>
+      <dt>Función</dt><dd>Una operación ya incorporada que transforma valores: <code>upper("a")</code>, <code>join(",", lista)</code>.</dd>
+    </dl>
+  </section>
+
   <!-- ================= ANATOMIA ================= -->
   <section class="block" id="anatomia">
     <div class="section-head">

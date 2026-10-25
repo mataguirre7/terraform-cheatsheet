@@ -39,6 +39,22 @@
     </nav>
   </div>
 
+  <section class="terms-box">
+    <h2>Términos de esta página</h2>
+    <dl class="terms">
+      <dt>Variable (input)</dt><dd>Un parámetro de entrada de tu configuración, para no escribir valores fijos (región, nombre, tamaño). Se usa como <code>var.nombre</code>.</dd>
+      <dt>.tfvars</dt><dd>Un archivo con valores para las variables (<code>nombre = valor</code>), por ejemplo uno por entorno.</dd>
+      <dt>Precedencia</dt><dd>El orden que decide qué valor gana cuando una variable está definida en varios lugares.</dd>
+      <dt>Output</dt><dd>Un valor que Terraform muestra al terminar (una IP, una URL) o que un módulo entrega a quien lo usa.</dd>
+      <dt>Local</dt><dd>Un valor calculado internamente para no repetir expresiones. Se usa como <code>local.nombre</code>.</dd>
+      <dt>Sensitive</dt><dd>Marca que oculta un valor en pantalla. Ojo: en el archivo de estado se sigue guardando en texto plano.</dd>
+      <dt>Estado (tfstate)</dt><dd>El archivo JSON donde Terraform anota qué creó y los identificadores reales de cada recurso.</dd>
+      <dt>Backend remoto</dt><dd>Guardar el estado fuera de tu PC (un bucket en la nube o HCP Terraform), para compartirlo con el equipo y no perderlo.</dd>
+      <dt>Bucket</dt><dd>Un “contenedor de archivos” en servicios de almacenamiento en la nube (S3 en AWS, Storage en Azure, GCS en Google).</dd>
+      <dt>Lock (bloqueo)</dt><dd>Marca que impide que dos ejecuciones modifiquen el mismo estado al mismo tiempo.</dd>
+    </dl>
+  </section>
+
   <!-- ================= VARIABLES ================= -->
   <section class="block" id="variables" data-search>
     <div class="section-head">

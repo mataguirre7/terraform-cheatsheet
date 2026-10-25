@@ -38,6 +38,21 @@
     </nav>
   </div>
 
+  <section class="terms-box">
+    <h2>Antes de empezar</h2>
+    <p>Qué necesitás y qué términos aparecen en esta práctica.</p>
+    <dl class="terms">
+      <dt>Requisitos</dt><dd>Docker Desktop abierto (ver la hoja de Docker “Empezar desde cero”), Terraform instalado (paso 0 abajo) y una carpeta con la app: <code>app.js</code>, <code>package.json</code> y <code>Dockerfile</code>.</dd>
+      <dt>La app de ejemplo</dt><dd>Una API Node con Express y Mongoose que se conecta a Mongo con <code>mongoose.connect("mongodb://mati:&lt;password&gt;@monguito:27017/miapp?authSource=admin")</code>, escucha en el puerto 3000 y tiene las rutas <code>/</code> (lista) y <code>/crear</code> (crea un documento). Con cualquier app parecida funciona igual: lo importante es que el host de Mongo sea <code>monguito</code> y que la contraseña coincida con la que le pases a Terraform.</dd>
+      <dt>Provider de Docker</dt><dd><code>kreuzwerker/docker</code>: el plugin que deja a Terraform crear imágenes, contenedores, redes y volúmenes en tu Docker local.</dd>
+      <dt>docker_image</dt><dd>Recurso que descarga una imagen o la construye a partir de un Dockerfile.</dd>
+      <dt>docker_container</dt><dd>Recurso que crea y arranca un contenedor (equivale a <code>docker run</code>).</dd>
+      <dt>docker_network / docker_volume</dt><dd>Una red para que los contenedores se encuentren por nombre, y un volumen para que los datos de la base sobrevivan.</dd>
+      <dt>npipe</dt><dd><i>Named pipe</i>: el canal por el que, en Windows, los programas se comunican con el motor de Docker.</dd>
+      <dt>triggers</dt><dd>Valores que, si cambian, obligan a reconstruir un recurso. Acá: el contenido de <code>app.js</code>.</dd>
+    </dl>
+  </section>
+
   <!-- ================= MAPA ================= -->
   <section class="block" id="mapa">
     <div class="section-head">
@@ -104,7 +119,7 @@
   <section class="block" id="archivos">
     <div class="section-head">
       <div class="num" style="--tone:var(--c-file)">2</div>
-      <div class="titles"><h2>Los archivos</h2><p>Creá una carpeta <code>terraform/</code> dentro de <code>docker-example</code> (al lado del <code>Dockerfile</code>).</p></div>
+      <div class="titles"><h2>Los archivos</h2><p>Creá una carpeta <code>terraform/</code> dentro de la carpeta de la app (al lado del <code>Dockerfile</code>).</p></div>
     </div>
     <div class="grid cols-2">
       <div class="card t-file">
@@ -212,7 +227,7 @@ resource "docker_container" "chanchito" {
   <section class="block" id="pasos" data-search>
     <div class="section-head">
       <div class="num" style="--tone:var(--ok)">3</div>
-      <div class="titles"><h2>Paso a paso</h2><p>En PowerShell, desde <code>docker-example/terraform</code>, con Docker Desktop abierto.</p></div>
+      <div class="titles"><h2>Paso a paso</h2><p>En PowerShell, desde la carpeta <code>terraform/</code> de la app, con Docker Desktop abierto.</p></div>
     </div>
     <div class="grid cols-2">
       <div class="card t-ok">

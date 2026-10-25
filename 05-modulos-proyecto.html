@@ -36,6 +36,20 @@
     </nav>
   </div>
 
+  <section class="terms-box">
+    <h2>Términos de esta página</h2>
+    <dl class="terms">
+      <dt>Módulo</dt><dd>Una carpeta de archivos <code>.tf</code> que se puede reutilizar, como una función: recibe variables y devuelve outputs.</dd>
+      <dt>Root module</dt><dd>La carpeta donde corrés <code>terraform plan</code>. Desde ahí se llaman los demás módulos (“módulos hijos”).</dd>
+      <dt>source</dt><dd>De dónde sale un módulo: una carpeta local, el Terraform Registry o un repositorio de Git.</dd>
+      <dt>Terraform Registry</dt><dd>El catálogo público (<code>registry.terraform.io</code>) de providers y módulos listos para usar.</dd>
+      <dt>Versión / restricción</dt><dd>Qué versiones de un provider o módulo aceptás, por ejemplo <code>~&gt; 3.0</code> (“la 3 y sus arreglos”).</dd>
+      <dt>Lock file</dt><dd><code>.terraform.lock.hcl</code>: anota la versión exacta de cada provider usada, para que todos usen la misma.</dd>
+      <dt>Entorno</dt><dd>Una copia separada de la infraestructura para un propósito: desarrollo (dev), pruebas (qa/staging), producción (prod).</dd>
+      <dt>Tag de Git</dt><dd>Un nombre fijo para un commit (<code>v1.2.0</code>); se usa para versionar módulos guardados en Git.</dd>
+    </dl>
+  </section>
+
   <!-- ================= MODULOS ================= -->
   <section class="block" id="modulos">
     <div class="section-head">

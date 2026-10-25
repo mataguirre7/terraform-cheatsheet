@@ -46,6 +46,22 @@
     </nav>
   </div>
 
+  <section class="terms-box">
+    <h2>Términos de esta página</h2>
+    <dl class="terms">
+      <dt>CLI</dt><dd>Usar un programa escribiendo comandos en la terminal. La CLI de Terraform es el comando <code>terraform</code>.</dd>
+      <dt>Carpeta de trabajo</dt><dd>Terraform lee todos los <code>.tf</code> de la carpeta donde corrés el comando (o la que indiques con <code>-chdir</code>).</dd>
+      <dt>Provider</dt><dd>El plugin que habla con una plataforma (AWS, Docker…). <code>init</code> los descarga.</dd>
+      <dt>Backend</dt><dd>El lugar donde se guarda el archivo de estado: tu disco (por defecto) o un almacenamiento remoto.</dd>
+      <dt>Plan guardado</dt><dd>Un archivo con el plan calculado (<code>-out=tfplan</code>), para aplicar exactamente eso después.</dd>
+      <dt>Lock (bloqueo)</dt><dd>Una marca que evita que dos personas apliquen cambios sobre el mismo estado a la vez.</dd>
+      <dt>Importar</dt><dd>Hacer que Terraform empiece a administrar un recurso que ya existía (creado a mano o por otra herramienta).</dd>
+      <dt>Workspace</dt><dd>Una forma de tener varios estados separados con el mismo código.</dd>
+      <dt>CI (integración continua)</dt><dd>Un sistema que corre comandos automáticamente en cada cambio del repositorio (por ejemplo, GitHub Actions).</dd>
+      <dt>Variable de entorno</dt><dd>Un valor que definís en la terminal (<code>$env:NOMBRE = "valor"</code> en PowerShell) y que los programas pueden leer.</dd>
+    </dl>
+  </section>
+
   <!-- ================= INSTALAR ================= -->
   <section class="block" id="instalar" data-search>
     <div class="section-head">

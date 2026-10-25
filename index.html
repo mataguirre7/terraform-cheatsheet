@@ -16,9 +16,9 @@
 <main class="wrap">
 
   <div class="hero">
-    <span class="eyebrow">Referencia personal</span>
+    <span class="eyebrow">Referencia y guía</span>
     <h1>Terraform Cheatsheets</h1>
-    <p class="lead">Infraestructura como código: conceptos, CLI, lenguaje HCL, estado y módulos, con diagramas y comandos para copiar. Si querés practicar sin cuenta de cloud, andá directo a <a href="06-practica-docker.html">Práctica con Docker</a>.</p>
+    <p class="lead">Terraform crea infraestructura (servidores, redes, bases de datos, contenedores) a partir de archivos de texto, en vez de clics. Estas hojas lo explican desde cero y se pueden practicar en tu PC, sin cuenta de nube, con la <a href="06-practica-docker.html">Práctica con Docker</a>.</p>
     <div class="toolbar">
       <label class="search">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
@@ -28,8 +28,27 @@
     </div>
   </div>
 
+  <!-- ================= RUTA ================= -->
+  <section class="block">
+    <div class="section-head">
+      <div class="titles"><h2>Por dónde empezar</h2><p>Si nunca usaste Terraform, seguí este orden.</p></div>
+    </div>
+    <div class="card">
+      <ol class="steps">
+        <li><a href="01-conceptos.html"><b>Conceptos</b></a>: qué es la infraestructura como código, el ciclo init → plan → apply y cómo leer un plan.</li>
+        <li><a href="06-practica-docker.html"><b>Práctica con Docker</b></a>: instalar Terraform y crear tus primeros recursos en tu PC, con todos los archivos.</li>
+        <li><a href="03-lenguaje-hcl.html"><b>Lenguaje HCL</b></a> y <a href="04-variables-estado.html"><b>Variables y estado</b></a>: entender cada parte de los archivos que usaste.</li>
+        <li><a href="05-modulos-proyecto.html"><b>Módulos y proyecto</b></a>: organizar un proyecto real.</li>
+        <li><a href="02-cli.html"><b>CLI</b></a> y <a href="07-problemas.html"><b>Problemas comunes</b></a>: para consultar cuando los necesites.</li>
+      </ol>
+    </div>
+  </section>
+
   <!-- ================= HOJAS ================= -->
   <section class="block">
+    <div class="section-head">
+      <div class="titles"><h2>Las hojas</h2></div>
+    </div>
     <div class="grid cols-3">
       <a class="card sheet-card t-comp" href="01-conceptos.html">
         <div class="top">

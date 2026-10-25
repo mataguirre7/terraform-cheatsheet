@@ -48,6 +48,18 @@
     </nav>
   </div>
 
+  <section class="terms-box">
+    <h2>Antes de buscar: cómo diagnosticar</h2>
+    <p>Comandos que aclaran la situación sin cambiar nada:</p>
+    <dl class="terms">
+      <dt><code>terraform validate</code></dt><dd>Revisa que los archivos estén bien escritos (sintaxis, nombres, tipos). Si falla acá, el problema está en el código.</dd>
+      <dt><code>terraform plan</code></dt><dd>Muestra qué haría. Si falla acá, suele ser un problema de credenciales, de conexión o de valores desconocidos.</dd>
+      <dt><code>terraform state list</code></dt><dd>Qué recursos administra Terraform según su estado.</dd>
+      <dt><code>$env:TF_LOG = "DEBUG"</code></dt><dd>Activa el registro detallado para el próximo comando (se desactiva con <code>Remove-Item Env:TF_LOG</code>).</dd>
+    </dl>
+    <p style="margin-top:12px">Palabras que aparecen en los errores: <b>refresh</b> (leer el estado real de los recursos), <b>lock file</b> (versiones fijadas de providers), <b>state lock</b> (bloqueo del estado), <b>drift</b> (diferencia entre código y realidad).</p>
+  </section>
+
   <!-- ================= ETAPAS ================= -->
   <section class="block" id="etapas">
     <div class="section-head">
