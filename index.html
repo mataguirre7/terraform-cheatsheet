@@ -35,8 +35,9 @@
     </div>
     <div class="card">
       <ol class="steps">
+        <li><a href="00-empezar.html"><b>Empezar desde cero</b></a>: instalar Terraform, escribir tu primer archivo y recorrer init → plan → apply → destroy con un contenedor.</li>
         <li><a href="01-conceptos.html"><b>Conceptos</b></a>: qué es la infraestructura como código, el ciclo init → plan → apply y cómo leer un plan.</li>
-        <li><a href="06-practica-docker.html"><b>Práctica con Docker</b></a>: instalar Terraform y crear tus primeros recursos en tu PC, con todos los archivos.</li>
+        <li><a href="06-practica-docker.html"><b>Práctica con Docker</b></a>: una app Node + MongoDB completa, con red, volumen y variables.</li>
         <li><a href="03-lenguaje-hcl.html"><b>Lenguaje HCL</b></a> y <a href="04-variables-estado.html"><b>Variables y estado</b></a>: entender cada parte de los archivos que usaste.</li>
         <li><a href="05-modulos-proyecto.html"><b>Módulos y proyecto</b></a>: organizar un proyecto real.</li>
         <li><a href="02-cli.html"><b>CLI</b></a> y <a href="07-problemas.html"><b>Problemas comunes</b></a>: para consultar cuando los necesites.</li>
@@ -50,6 +51,14 @@
       <div class="titles"><h2>Las hojas</h2></div>
     </div>
     <div class="grid cols-3">
+      <a class="card sheet-card t-ok" href="00-empezar.html">
+        <div class="top">
+          <div class="badge"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m5 12 5 5L20 7"/></svg></div>
+          <div><span class="tag">00</span><h3>Empezar desde cero</h3></div>
+        </div>
+        <p>Instalar Terraform, primer main.tf y el ciclo init → plan → apply → destroy con un contenedor nginx, con la salida esperada.</p>
+        <div class="chips"><span>winget</span><span>main.tf</span><span>plan</span><span>apply</span><span>destroy</span></div>
+      </a>
       <a class="card sheet-card t-comp" href="01-conceptos.html">
         <div class="top">
           <div class="badge"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2 2 7l10 5 10-5-10-5z"/><path d="m2 17 10 5 10-5"/><path d="m2 12 10 5 10-5"/></svg></div>
@@ -192,6 +201,7 @@ terraform apply tfplan</code></pre></div>
           <thead><tr><th>Hoja</th><th>Tema oscuro</th><th>Tema claro</th></tr></thead>
           <tbody>
             <tr><td>Inicio</td><td><a href="img/index-dark.png" download>index-dark.png</a></td><td><a href="img/index-light.png" download>index-light.png</a></td></tr>
+            <tr><td>00 · Empezar desde cero</td><td><a href="img/00-empezar-dark.png" download>00-empezar-dark.png</a></td><td><a href="img/00-empezar-light.png" download>00-empezar-light.png</a></td></tr>
             <tr><td>01 · Conceptos</td><td><a href="img/01-conceptos-dark.png" download>01-conceptos-dark.png</a></td><td><a href="img/01-conceptos-light.png" download>01-conceptos-light.png</a></td></tr>
             <tr><td>02 · CLI</td><td><a href="img/02-cli-dark.png" download>02-cli-dark.png</a></td><td><a href="img/02-cli-light.png" download>02-cli-light.png</a></td></tr>
             <tr><td>03 · Lenguaje HCL</td><td><a href="img/03-lenguaje-hcl-dark.png" download>03-lenguaje-hcl-dark.png</a></td><td><a href="img/03-lenguaje-hcl-light.png" download>03-lenguaje-hcl-light.png</a></td></tr>
@@ -209,7 +219,7 @@ terraform apply tfplan</code></pre></div>
 
   <footer class="foot">
     <span>Terraform Cheatsheets · sirve igual para OpenTofu</span>
-    <a href="01-conceptos.html">Empezar por Conceptos →</a>
+    <a href="00-empezar.html">Empezar desde cero →</a>
   </footer>
 </main>
 </body>

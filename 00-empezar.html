@@ -1,0 +1,340 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="description" content="Empezar con Terraform desde cero en Windows: instalarlo, escribir el primer archivo .tf, y recorrer init, plan, apply y destroy con un contenedor de Docker, sin cuenta de cloud.">
+<meta name="theme-color" content="#7b42bc">
+<title>Terraform · Empezar desde cero</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect x='4' y='4' width='56' height='56' rx='14' fill='%237b42bc'/%3E%3Cg fill='%23fff'%3E%3Cpath d='M14 13l10 5.8v11.6l-10-5.8z'/%3E%3Cpath d='M26 20.4l10 5.8v11.6l-10-5.8z'/%3E%3Cpath d='M26 34.2l10 5.8v11.6l-10-5.8z'/%3E%3Cpath d='M38 26.2l10-5.8v11.6l-10 5.8z' opacity='.7'/%3E%3C/g%3E%3C/svg%3E">
+<link rel="stylesheet" href="assets/style.css">
+<script src="assets/app.js"></script>
+</head>
+<body data-page="empezar">
+<header class="topbar"></header>
+
+<main class="wrap">
+
+  <div class="hero">
+    <span class="eyebrow">Terraform · Cheatsheet 00</span>
+    <h1>Empezar con Terraform desde cero</h1>
+    <p class="lead">Una guía para hacer en orden, en Windows, sin cuenta de AWS ni de Azure. En vez de crear servidores en la nube, Terraform va a crear un contenedor en tu Docker Desktop: el flujo de trabajo es exactamente el mismo, pero es gratis y se borra en un segundo. Cada paso explica qué hace y muestra lo que deberías ver.</p>
+    <nav class="toc">
+      <a href="#requisitos">Requisitos</a>
+      <a href="#instalar">1 · Instalar</a>
+      <a href="#archivo">2 · Primer archivo</a>
+      <a href="#init">3 · init</a>
+      <a href="#plan">4 · plan</a>
+      <a href="#apply">5 · apply</a>
+      <a href="#cambiar">6 · Cambiar algo</a>
+      <a href="#estado">7 · El estado</a>
+      <a href="#destroy">8 · destroy</a>
+    </nav>
+  </div>
+
+  <section class="terms-box">
+    <h2>Términos de esta página</h2>
+    <p>Con más detalle en <a href="01-conceptos.html">Conceptos</a>.</p>
+    <dl class="terms">
+      <dt>Infraestructura</dt><dd>Todo lo que una app necesita para correr: servidores, redes, bases de datos, contenedores, DNS…</dd>
+      <dt>Infraestructura como código</dt><dd>Describir esa infraestructura en archivos de texto, en vez de crearla a mano con clics. Los archivos se guardan en Git y se pueden repetir.</dd>
+      <dt>Terraform</dt><dd>El programa que lee esos archivos y crea, cambia o borra lo que describen.</dd>
+      <dt>Archivo <code>.tf</code></dt><dd>Un archivo de configuración de Terraform, escrito en un lenguaje llamado <b>HCL</b>.</dd>
+      <dt>Provider</dt><dd>Un plugin que le enseña a Terraform a hablar con un servicio (AWS, Azure, Docker…). Se descarga solo.</dd>
+      <dt>Recurso (<code>resource</code>)</dt><dd>Una cosa concreta que Terraform administra: una imagen, un contenedor, una máquina virtual…</dd>
+      <dt>Estado (<i>state</i>)</dt><dd>El archivo <code>terraform.tfstate</code>, donde Terraform anota lo que creó, para saber qué cambiar la próxima vez.</dd>
+      <dt>Plan</dt><dd>La lista de cambios que Terraform haría, mostrada antes de hacerlos.</dd>
+    </dl>
+  </section>
+
+  <!-- ================= REQUISITOS ================= -->
+  <section class="block" id="requisitos">
+    <div class="section-head">
+      <div class="num">0</div>
+      <div class="titles"><h2>Requisitos</h2></div>
+    </div>
+    <div class="explain">
+      <p><b>Docker Desktop</b> instalado y abierto: es donde Terraform va a crear el contenedor (en la colección de Docker, la hoja “Empezar desde cero” explica cómo instalarlo). Comprobalo con <code>docker version</code>: tienen que aparecer las secciones Client y Server.</p>
+      <p>Un editor de texto. Con <b>VS Code</b>, instalá la extensión <b>HashiCorp Terraform</b>: colorea los archivos <code>.tf</code> y avisa de errores mientras escribís.</p>
+    </div>
+  </section>
+
+  <!-- ================= INSTALAR ================= -->
+  <section class="block" id="instalar">
+    <div class="section-head">
+      <div class="num">1</div>
+      <div class="titles"><h2>Instalar Terraform</h2><p>Una sola vez.</p></div>
+    </div>
+    <div class="grid cols-2">
+      <div class="card">
+        <div class="cmd"><pre><code>winget install Hashicorp.Terraform</code></pre><div class="what"><code>winget</code> es el instalador de programas que trae Windows. Este comando descarga Terraform y lo agrega al <b>PATH</b> (la lista de carpetas donde Windows busca comandos). Al terminar, <b>cerrá y volvé a abrir la terminal</b> para que la vea.</div></div>
+        <div class="cmd"><pre><code>terraform -version</code></pre><div class="what">Muestra la versión instalada. Si aparece, la instalación funcionó.</div></div>
+        <pre class="out"><code data-lang="plain">Terraform v1.1x.x
+on windows_amd64</code></pre>
+      </div>
+      <div class="card">
+        <div class="callout bad"><span class="ico">✕</span><p><i>“terraform no se reconoce como nombre de un cmdlet”</i>: la terminal se abrió antes de instalar. Cerrala del todo (también VS Code, si usás su terminal) y abrila de nuevo.</p></div>
+        <div class="callout info"><span class="ico">i</span><p><b>OpenTofu</b> es una copia libre de Terraform que funciona igual: <code>winget install OpenTofu.Tofu</code> y en todos los comandos se escribe <code>tofu</code> en vez de <code>terraform</code>.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= ARCHIVO ================= -->
+  <section class="block" id="archivo">
+    <div class="section-head">
+      <div class="num">2</div>
+      <div class="titles"><h2>Tu primer archivo .tf</h2><p>Un servidor web nginx, como contenedor de Docker.</p></div>
+    </div>
+    <div class="grid cols-2">
+      <div class="card">
+        <ol class="steps">
+          <li>Creá una carpeta vacía, por ejemplo <code>C:\proyectos\hola-terraform</code>, y abrila en VS Code.</li>
+          <li>Creá adentro un archivo llamado <code>main.tf</code> con el contenido de la derecha.</li>
+          <li>Abrí una terminal <b>en esa carpeta</b> (en VS Code: <b>Terminal → New Terminal</b>). Terraform lee todos los <code>.tf</code> de la carpeta donde lo ejecutás.</li>
+        </ol>
+        <div class="explain">
+          <p>El archivo tiene cuatro bloques:</p>
+          <ol class="steps">
+            <li><b><code>terraform</code></b>: qué providers necesita este proyecto y de dónde bajarlos. <code>~&gt; 3.0</code> = cualquier versión 3.x.</li>
+            <li><b><code>provider "docker"</code></b>: cómo conectarse a Docker. En Windows se habla con Docker Desktop por un <i>named pipe</i> (un canal interno de Windows); esa es la dirección rara de <code>host</code>.</li>
+            <li><b><code>resource "docker_image" "nginx"</code></b>: “quiero que exista la imagen nginx”. El primer texto es el <b>tipo</b> de recurso; el segundo, el <b>nombre</b> que vos le das para referirte a él.</li>
+            <li><b><code>resource "docker_container" "web"</code></b>: “quiero un contenedor con esa imagen, con el puerto 80 publicado en el 8080 de mi PC”. <code>docker_image.nginx.image_id</code> es una <b>referencia</b>: usa el ID de la imagen del bloque anterior, y eso le dice a Terraform que tiene que crear la imagen primero.</li>
+          </ol>
+        </div>
+      </div>
+      <div class="card">
+        <div class="code-label"><span class="file">main.tf</span></div>
+        <pre class="big"><code data-lang="hcl">terraform {
+  required_providers {
+    docker = {
+      source  = "kreuzwerker/docker"
+      version = "~&gt; 3.0"
+    }
+  }
+}
+
+provider "docker" {
+  # Windows + Docker Desktop
+  host = "npipe:////.//pipe//docker_engine"
+  # En Linux o macOS sería:
+  # host = "unix:///var/run/docker.sock"
+}
+
+# La imagen: equivale a "docker pull nginx:1.27"
+resource "docker_image" "nginx" {
+  name = "nginx:1.27"
+}
+
+# El contenedor: equivale a
+# "docker run -d --name hola-web -p 8080:80 nginx:1.27"
+resource "docker_container" "web" {
+  name  = "hola-web"
+  image = docker_image.nginx.image_id
+
+  ports {
+    internal = 80     # puerto dentro del contenedor
+    external = 8080   # puerto en tu PC
+  }
+}</code></pre>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= INIT ================= -->
+  <section class="block" id="init">
+    <div class="section-head">
+      <div class="num">3</div>
+      <div class="titles"><h2><code>terraform init</code>: preparar la carpeta</h2><p>Se corre una vez por proyecto (y de nuevo si agregás providers o módulos).</p></div>
+    </div>
+    <div class="grid cols-2">
+      <div class="card">
+        <div class="cmd"><pre><code>terraform init</code></pre><div class="what">Lee el bloque <code>terraform</code>, descarga el provider de Docker y lo guarda en una carpeta oculta <code>.terraform/</code>. También crea <code>.terraform.lock.hcl</code>, que anota la versión exacta descargada para que todos los que usen el proyecto tengan la misma. No crea nada en Docker todavía.</div></div>
+      </div>
+      <div class="card">
+        <pre class="out"><code data-lang="plain">Initializing the backend...
+Initializing provider plugins...
+- Finding kreuzwerker/docker versions matching "~&gt; 3.0"...
+- Installing kreuzwerker/docker v3.x.x...
+- Installed kreuzwerker/docker v3.x.x (self-signed, key ID ...)
+
+Terraform has created a lock file .terraform.lock.hcl ...
+
+Terraform has been successfully initialized!</code></pre>
+        <div class="callout tip"><span class="ico">✓</span><p>Si usás Git: <code>.terraform/</code> y <code>*.tfstate</code> van al <code>.gitignore</code>; <code>.terraform.lock.hcl</code> sí se sube.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= PLAN ================= -->
+  <section class="block" id="plan">
+    <div class="section-head">
+      <div class="num">4</div>
+      <div class="titles"><h2><code>terraform plan</code>: ver qué haría</h2><p>No cambia nada. Es el paso para revisar antes de tocar.</p></div>
+    </div>
+    <div class="grid cols-2">
+      <div class="card">
+        <div class="cmd"><pre><code>terraform plan</code></pre><div class="what">Compara lo que dicen tus archivos con lo que anotó en el estado (ahora vacío, porque nunca creó nada) y muestra la diferencia. Cada recurso lleva un símbolo al principio:</div></div>
+        <dl class="terms">
+          <dt><code>+</code></dt><dd>Se va a <b>crear</b>.</dd>
+          <dt><code>~</code></dt><dd>Se va a <b>modificar</b> sin borrarlo.</dd>
+          <dt><code>-</code></dt><dd>Se va a <b>borrar</b>.</dd>
+          <dt><code>-/+</code></dt><dd>Se va a <b>reemplazar</b>: borrar y crear de nuevo (pasa cuando un cambio no se puede hacer en el lugar).</dd>
+        </dl>
+        <div class="explain"><p><i>(known after apply)</i> = un valor que recién se conoce al crear el recurso, como el ID que le asigne Docker.</p></div>
+      </div>
+      <div class="card">
+        <pre class="out"><code data-lang="plain">Terraform will perform the following actions:
+
+  # docker_container.web will be created
+  + resource "docker_container" "web" {
+      + id    = (known after apply)
+      + image = (known after apply)
+      + name  = "hola-web"
+      ...
+      + ports {
+          + external = 8080
+          + internal = 80
+          ...
+        }
+    }
+
+  # docker_image.nginx will be created
+  + resource "docker_image" "nginx" {
+      + id       = (known after apply)
+      + image_id = (known after apply)
+      + name     = "nginx:1.27"
+    }
+
+Plan: 2 to add, 0 to change, 0 to destroy.</code></pre>
+        <div class="explain"><p>La última línea es el resumen: <b>2 para crear</b>, nada para cambiar ni borrar.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= APPLY ================= -->
+  <section class="block" id="apply">
+    <div class="section-head">
+      <div class="num">5</div>
+      <div class="titles"><h2><code>terraform apply</code>: crearlo de verdad</h2></div>
+    </div>
+    <div class="grid cols-2">
+      <div class="card">
+        <div class="cmd"><pre><code>terraform apply</code></pre><div class="what">Vuelve a calcular el plan, te lo muestra y <b>pregunta antes de hacer nada</b>. Escribí <code>yes</code> (exactamente esa palabra) y <kbd>Enter</kbd>. Cualquier otra respuesta cancela.</div></div>
+        <pre class="out"><code data-lang="plain">Plan: 2 to add, 0 to change, 0 to destroy.
+
+Do you want to perform these actions?
+  Terraform will perform the actions described above.
+  Only 'yes' will be accepted to approve.
+
+  Enter a value: yes
+
+docker_image.nginx: Creating...
+docker_image.nginx: Creation complete after 8s [id=sha256:...]
+docker_container.web: Creating...
+docker_container.web: Creation complete after 1s [id=4f2a...]
+
+Apply complete! Resources: 2 added, 0 changed, 0 destroyed.</code></pre>
+      </div>
+      <div class="card">
+        <h3>Comprobar</h3>
+        <ol class="steps">
+          <li>Abrí <code>http://localhost:8080</code>: aparece <b>“Welcome to nginx!”</b>.</li>
+          <li>En Docker Desktop, en <b>Containers</b>, aparece <code>hola-web</code> corriendo. También con <code>docker ps</code>.</li>
+          <li>En la carpeta apareció <code>terraform.tfstate</code>: ahí Terraform anotó lo que creó (paso 7).</li>
+        </ol>
+        <div class="cmd"><pre><code>terraform apply</code></pre><div class="what">Probá correrlo otra vez sin cambiar nada: dice <b>“No changes. Your infrastructure matches the configuration.”</b> Terraform no repite lo que ya existe; solo corrige diferencias. Por eso se puede ejecutar todas las veces que haga falta.</div></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= CAMBIAR ================= -->
+  <section class="block" id="cambiar">
+    <div class="section-head">
+      <div class="num">6</div>
+      <div class="titles"><h2>Cambiar algo y volver a aplicar</h2><p>El ciclo de todos los días: editar el archivo → plan → apply.</p></div>
+    </div>
+    <div class="grid cols-2">
+      <div class="card">
+        <div class="explain"><p>En <code>main.tf</code>, cambiá <code>external = 8080</code> por <code>external = 8081</code> y guardá.</p></div>
+        <div class="cmd"><pre><code>terraform plan</code></pre></div>
+        <pre class="out"><code data-lang="plain">  # docker_container.web must be replaced
+-/+ resource "docker_container" "web" {
+      ~ ports { # forces replacement
+          ~ external = 8080 -&gt; 8081 # forces replacement
+            internal = 80
+        }
+    }
+
+Plan: 1 to add, 0 to change, 1 to destroy.</code></pre>
+      </div>
+      <div class="card">
+        <div class="explain"><p>El puerto de un contenedor no se puede cambiar con el contenedor andando, así que Terraform lo va a <b>reemplazar</b> (<code>-/+</code>): borra el viejo y crea uno nuevo. <i>forces replacement</i> marca qué cambio lo obliga. La imagen no aparece porque no cambió.</p></div>
+        <div class="cmd"><pre><code>terraform apply</code></pre><div class="what">Confirmá con <code>yes</code>. Ahora la página está en <code>http://localhost:8081</code> y ya no en 8080.</div></div>
+        <div class="callout warn"><span class="ico">!</span><p>Leé siempre el plan antes de confirmar. En la nube, un <code>-/+</code> sobre una base de datos significa borrarla y crear una vacía.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= ESTADO ================= -->
+  <section class="block" id="estado">
+    <div class="section-head">
+      <div class="num">7</div>
+      <div class="titles"><h2>Mirar el estado</h2><p>Lo que Terraform recuerda de lo que creó.</p></div>
+    </div>
+    <div class="grid cols-2">
+      <div class="card">
+        <div class="cmd"><pre><code>terraform state list</code></pre><div class="what">Lista los recursos que Terraform está administrando, con la forma <code>tipo.nombre</code> que usaste en el archivo.</div></div>
+        <pre class="out"><code data-lang="plain">docker_container.web
+docker_image.nginx</code></pre>
+        <div class="cmd"><pre><code>terraform state show docker_container.web</code></pre><div class="what">Todos los datos guardados de un recurso: ID, nombre, puertos, IP dentro de Docker…</div></div>
+      </div>
+      <div class="card">
+        <div class="callout warn"><span class="ico">!</span><p><b>No borres ni edites <code>terraform.tfstate</code> a mano.</b> Si se pierde, Terraform “olvida” lo que creó: los contenedores siguen existiendo, pero el próximo <code>apply</code> intentará crearlos de nuevo y fallará porque el nombre ya está en uso. En equipos, el estado se guarda en un lugar compartido (ver <a href="04-variables-estado.html">Variables y estado</a>).</p></div>
+        <div class="callout info"><span class="ico">i</span><p>Si borrás el contenedor desde Docker Desktop, el próximo <code>terraform plan</code> lo detecta y propone crearlo otra vez: el archivo dice que tiene que existir.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= DESTROY ================= -->
+  <section class="block" id="destroy">
+    <div class="section-head">
+      <div class="num">8</div>
+      <div class="titles"><h2><code>terraform destroy</code>: borrar todo y siguientes pasos</h2></div>
+    </div>
+    <div class="grid cols-2">
+      <div class="card">
+        <div class="cmd"><pre><code>terraform destroy</code></pre><div class="what">Borra <b>todo</b> lo que figura en el estado de esta carpeta (y nada más). Muestra el plan con <code>-</code> en cada recurso y pide <code>yes</code>. Los archivos <code>.tf</code> quedan intactos: un <code>terraform apply</code> vuelve a crear todo igual.</div></div>
+        <pre class="out"><code data-lang="plain">Plan: 0 to add, 0 to change, 2 to destroy.
+...
+docker_container.web: Destroying... [id=4f2a...]
+docker_container.web: Destruction complete after 1s
+docker_image.nginx: Destroying... [id=sha256:...]
+docker_image.nginx: Destruction complete after 0s
+
+Destroy complete! Resources: 2 destroyed.</code></pre>
+      </div>
+      <div class="card">
+        <h3>Resumen del ciclo</h3>
+        <dl class="terms">
+          <dt><code>init</code></dt><dd>Prepara la carpeta y descarga providers.</dd>
+          <dt><code>plan</code></dt><dd>Muestra qué cambiaría, sin tocar nada.</dd>
+          <dt><code>apply</code></dt><dd>Hace los cambios (pide confirmación).</dd>
+          <dt><code>destroy</code></dt><dd>Borra todo lo que creó.</dd>
+        </dl>
+        <h3 style="margin-top:12px">Para seguir</h3>
+        <ol class="steps">
+          <li><a href="01-conceptos.html"><b>Conceptos</b></a>: cómo piensa Terraform y qué es cada pieza.</li>
+          <li><a href="04-variables-estado.html"><b>Variables y estado</b></a>: no repetir valores y no subir contraseñas.</li>
+          <li><a href="06-practica-docker.html"><b>Práctica con Docker</b></a>: una app Node + MongoDB completa, con red y volumen.</li>
+        </ol>
+      </div>
+    </div>
+  </section>
+
+  <footer class="foot">
+    <a href="index.html">← Inicio</a>
+    <a href="01-conceptos.html">Siguiente: Conceptos →</a>
+  </footer>
+</main>
+</body>
+</html>

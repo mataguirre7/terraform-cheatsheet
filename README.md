@@ -1,11 +1,12 @@
 # Terraform Cheatsheets
 
-Cheatsheets visuales de Terraform en español: diagramas, comandos con buscador, HCL resaltado, botón copiar y tema claro/oscuro.
+Cheatsheets de Terraform en español, pensadas para quien empieza: cada página explica sus términos y hay una guía para crear tus primeros recursos sin cuenta de cloud. Incluyen diagramas, comandos con buscador, HCL resaltado, botón copiar y tema claro/oscuro.
 Sitio 100 % estático (HTML + CSS + JS, sin build ni dependencias). Todo aplica también a OpenTofu (`tofu`).
 
 | Hoja | Contenido |
 |---|---|
 | `index.html` | Portada, buscador “Quiero…” y descargas en PNG |
+| `00-empezar.html` | Instalar Terraform, primer `main.tf` y el ciclo init → plan → apply → destroy con un contenedor, paso a paso |
 | `01-conceptos.html` | Flujo init → plan → apply, providers, estado deseado vs real, cómo leer un plan, glosario |
 | `02-cli.html` | CLI completa: plan/apply, init, outputs, `state`, `import`, workspaces, variables de entorno, CI |
 | `03-lenguaje-hcl.html` | Bloques, tipos, referencias, expresiones, `count` vs `for_each`, `dynamic`, `lifecycle`, `moved`, funciones |
@@ -18,7 +19,7 @@ Sitio 100 % estático (HTML + CSS + JS, sin build ni dependencias). Todo aplica 
 
 ```
 terraform-cheatsheets/
-├── index.html, 01-…07-*.html   # páginas
+├── index.html, 00-…07-*.html   # páginas
 ├── 404.html                    # página de error (Netlify la usa sola)
 ├── assets/
 │   ├── style.css               # estilos y temas

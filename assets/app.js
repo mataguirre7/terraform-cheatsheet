@@ -16,6 +16,7 @@
     other: { label: "Docker", href: "", icon: "whale" },
     pages: [
       { id: "inicio",     href: "index.html",                 label: "Inicio" },
+      { id: "empezar",    href: "00-empezar.html",            label: "Empezar" },
       { id: "conceptos",  href: "01-conceptos.html",          label: "Conceptos" },
       { id: "cli",        href: "02-cli.html",                label: "CLI" },
       { id: "hcl",        href: "03-lenguaje-hcl.html",       label: "Lenguaje HCL" },

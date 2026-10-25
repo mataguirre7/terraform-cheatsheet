@@ -98,7 +98,7 @@ replicas = 2</code></pre>
 replicas = 3</code></pre>
         <div class="cmd"><pre><code># secretos: por variable de entorno, nunca en un archivo versionado
 $env:TF_VAR_mongo_password = "&lt;password&gt;"
-terraform plan</code></pre><div class="what">PowerShell. En Bash: <code>export TF_VAR_mongo_password=…</code></div></div>
+terraform plan</code></pre><div class="what">Terraform toma como valor de <code>variable "mongo_password"</code> cualquier variable de entorno llamada <code>TF_VAR_mongo_password</code>. Así la contraseña no queda escrita en ningún archivo del repo. La sintaxis es de PowerShell y vale solo para esa terminal; en Bash: <code>export TF_VAR_mongo_password=…</code>.</div></div>
         <div class="callout info"><span class="ico">i</span><p>Si una variable obligatoria no tiene valor por ningún lado, <code>plan</code> te la pregunta por teclado.</p></div>
       </div>
     </div>
@@ -168,7 +168,7 @@ output "mongo_password" {
   sensitive = true    # se muestra como (sensitive value)
 }</code></pre>
         <div class="cmd"><pre><code>terraform output
-terraform output -raw url</code></pre><div class="what">Se muestran al final de cada <code>apply</code> y se consultan cuando quieras.</div></div>
+terraform output -raw url</code></pre><div class="what">Los outputs se muestran solos al final de cada <code>apply</code>. Después se consultan cuando quieras: <code>terraform output</code> lista todos; <code>-raw url</code> devuelve uno solo, sin comillas, para usarlo en otro comando.</div></div>
       </div>
       <div class="card t-net">
         <h3>locals</h3>

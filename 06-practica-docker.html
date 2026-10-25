@@ -233,27 +233,27 @@ resource "docker_container" "chanchito" {
       <div class="card t-ok">
         <h3>Levantar</h3>
         <div class="cmd"><pre><code># 0. Una sola vez: instalar Terraform
-winget install Hashicorp.Terraform</code></pre><div class="what">Cerrá y abrí la terminal después.</div></div>
+winget install Hashicorp.Terraform</code></pre><div class="what">Instala Terraform con el instalador de Windows. Después <b>cerrá y abrí la terminal</b> y comprobalo con <code>terraform -version</code>. Si ya lo tenés, saltá este paso.</div></div>
         <div class="cmd"><pre><code># 1. Liberar nombres y puertos del compose
-docker compose -f ../docker-compose.yml down</code></pre><div class="what">Sin <code>-v</code>: tus datos del compose quedan en su volumen.</div></div>
+docker compose -f ../docker-compose.yml down</code></pre><div class="what">Si tenías la app levantada con Compose, bajala: Terraform va a crear contenedores con los mismos nombres y puertos y chocarían. Sin <code>-v</code>, los datos del compose quedan guardados en su volumen.</div></div>
         <div class="cmd"><pre><code># 2. La contraseña (la misma que usa app.js)
-$env:TF_VAR_mongo_password = "&lt;password&gt;"</code></pre><div class="what">Dura lo que dura esa terminal.</div></div>
+$env:TF_VAR_mongo_password = "&lt;password&gt;"</code></pre><div class="what">Define la contraseña de Mongo como variable de entorno (Terraform la lee por el prefijo <code>TF_VAR_</code>). Vale solo para esa terminal: si abrís otra, hay que volver a definirla. Tiene que ser la misma que figura en la cadena de conexión de <code>app.js</code>.</div></div>
         <div class="cmd"><pre><code># 3. Preparar, revisar y aplicar
 terraform init
 terraform fmt
 terraform validate
 terraform plan
-terraform apply</code></pre><div class="what">El plan tiene que decir <b>6 to add</b>. Confirmá con <code>yes</code>.</div></div>
+terraform apply</code></pre><div class="what"><code>init</code> descarga el provider de Docker; <code>fmt</code> ordena el formato; <code>validate</code> detecta errores de escritura; <code>plan</code> muestra lo que va a crear: tiene que decir <b>6 to add</b> (red, volumen, dos imágenes y dos contenedores). <code>apply</code> lo crea después de que confirmes con <code>yes</code>.</div></div>
       </div>
       <div class="card t-ok">
         <h3>Probar, mirar y borrar</h3>
         <div class="cmd"><pre><code># 4. Probar la app
 #   http://localhost:3000/crear  -> crea un documento
 #   http://localhost:3000        -> lista
-terraform output url</code></pre><div class="what">El output te recuerda la URL.</div></div>
+terraform output url</code></pre><div class="what">Abrí las dos direcciones en el navegador: <code>/crear</code> agrega un documento en Mongo y <code>/</code> los lista. <code>terraform output url</code> muestra la URL definida en <code>outputs.tf</code>.</div></div>
         <div class="cmd"><pre><code># 5. Lo que administra Terraform
 terraform state list
-docker ps</code></pre><div class="what">Los mismos contenedores, ahora creados por Terraform.</div></div>
+docker ps</code></pre><div class="what"><code>state list</code> muestra los 6 recursos que Terraform tiene registrados; <code>docker ps</code>, los contenedores corriendo. Son contenedores comunes: Docker Desktop los muestra igual que los de Compose.</div></div>
         <div class="cmd"><pre><code># 6. Borrar todo lo creado
 terraform destroy</code></pre><div class="what">Borra contenedores, red y volumen (⚠ los datos de Mongo). Las imágenes quedan por <code>keep_locally</code>.</div></div>
         <div class="callout info"><span class="ico">i</span><p>Se crean <code>.terraform/</code>, <code>.terraform.lock.hcl</code> y <code>terraform.tfstate</code>. Agregá al <code>.gitignore</code> del repo los que no van (ver <a href="04-variables-estado.html#seguridad">Secretos y git</a>).</p></div>

@@ -283,7 +283,7 @@ output "urls" {
 │       └── …                # mismo esquema, otro estado
 ├── .gitignore
 └── README.md</code></pre>
-        <div class="cmd"><pre><code>terraform -chdir=envs/dev plan</code></pre><div class="what">Trabajar con un entorno sin hacer <code>cd</code>.</div></div>
+        <div class="cmd"><pre><code>terraform -chdir=envs/dev plan</code></pre><div class="what">Ejecuta Terraform sobre la carpeta de un entorno sin hacer <code>cd</code>. Cada carpeta de <code>envs/</code> tiene su propio estado, así que hay que hacer <code>init</code> en cada una la primera vez: <code>terraform -chdir=envs/dev init</code>.</div></div>
       </div>
       <div class="card t-comp">
         <h3>Carpetas por entorno vs workspaces</h3>
